@@ -1,0 +1,4303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f172a">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rojmel Ledger Vault</title>
+    <style>
+html, body {
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+}
+        :root {
+            --primary: #0f172a;
+            --primary-light: rgba(241, 245, 249, 0.95);
+            --success: #16a34a;
+            --success-light: rgba(220, 252, 231, 0.95);
+            --danger: #dc2626;
+            --danger-light: rgba(254, 226, 226, 0.95);
+            --warning: #d97706;
+            --warning-light: rgba(254, 243, 199, 0.95);
+            --background: #f8fafc;
+            
+            /* ADJUSTED FOR HIGH VISIBILITY: Higher transparency (0.65) and lower blur */
+            --card: rgba(255, 255, 255, 0.65); 
+            --text-main: #0f172a; /* Darkened text for strong contrast against transparent cards */
+            --text-dark: #000000;
+            --text-muted: #334155;
+            --border: rgba(15, 23, 42, 0.25); /* Darker border to define shapes over clear background */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            padding-bottom: 40px;
+            overflow-x: hidden;
+            transition: background-color 0.15s ease;
+            min-height: 100vh;
+        }
+
+        /* Fixed Background Configuration - Clearer overlays so the image is fully viewable */
+        body.auth-mode {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.4)), url('https://i.postimg.cc/SNrk9Q95/Gemini-Generated-Image-agt3wgagt3wgagt3.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 0;
+        }
+
+        body.app-mode {
+            background-image: linear-gradient(rgba(248, 250, 252, 0.4), rgba(248, 250, 252, 0.5)), url('https://i.postimg.cc/vB3CBTkX/c2b519a5-b65a-4b52-8cbc-b2ebca5a5a93.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        body.flash-green {
+            background-color: #4ade80 !important;
+            background-image: none !important;
+        }
+        body.flash-red {
+            background-color: #f87171 !important;
+            background-image: none !important;
+        }
+
+        .ganesha-text-banner {
+            width: 100%;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.75);
+            padding: 12px 0 6px 0;
+            font-size: 20px;
+            font-weight: 800;
+            color: #ea580c;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(2px);
+        }
+        
+        body.auth-mode .ganesha-text-banner {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(2px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        body.app-mode .ganesha-text-banner {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(2px);
+        }
+
+        .app-bar {
+            background-color: rgba(15, 23, 42, 0.8); /* Slightly transparent app bar */
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 12px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .nav-left-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            display: block;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .profile-section-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        
+        .profile-section:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .profile-avatar {
+            width: 24px;
+            height: 24px;
+            background: #cbd5e1;
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .profile-dropdown-menu {
+            position: absolute;
+            top: 110%;
+            right: 0;
+            background: white;
+            min-width: 160px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            z-index: 250;
+            display: none;
+        }
+
+        .profile-dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-logout-btn {
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--danger);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .dropdown-logout-btn:hover {
+            background: var(--danger-light);
+        }
+
+        .side-drawer {
+            position: fixed;
+            top: 0;
+            left: -290px;
+            width: 290px;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            z-index: 200;
+            transition: 0.3s ease-in-out;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.15);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .side-drawer.open { left: 0; }
+        .drawer-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            z-index: 199;
+            display: none;
+        }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+        .drawer-menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .drawer-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.2s;
+            color: #cbd5e1;
+        }
+        .drawer-item:hover, .drawer-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .drawer-sub-section {
+            margin-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
+        }
+        .drawer-sub-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            padding-left: 6px;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .auth-container {
+            max-width: 420px;
+            width: 90%;
+            margin: auto;
+            padding: 30px 24px;
+            background: rgba(255, 255, 255, 0.75); /* Highly viewable login frame */
+            backdrop-filter: blur(2px);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .auth-container h2 { margin-bottom: 20px; color: var(--text-dark); font-size: 24px; text-align: center; }
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--text-dark);
+            background: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+        }
+
+        select[multiple] {
+            height: 120px;
+            padding: 8px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-dark); font-weight: 600; }
+        .auth-switch span { color: #ea580c; cursor: pointer; font-weight: 700; text-decoration: underline; }
+
+        .main-app { display: none; max-width: 1100px; margin: 0 auto; padding: 20px 15px; }
+
+        /* Reduced backdrop-filter blur here so dashboard data doesn't cloud the background image */
+        .summary-card {
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            margin: 0 0 20px 0;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .summary-card p { font-size: 28px; font-weight: 800; }
+        .summary-box { padding: 20px; border-radius: 12px; }
+        .box-give { background-color: var(--danger-light); color: var(--danger); border: 1px solid rgba(220, 38, 38, 0.2); }
+        .box-take { background-color: var(--success-light); color: var(--success); border: 1px solid rgba(22, 163, 74, 0.2); }
+        .summary-box h3 { font-size: 13px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; font-weight: 700; }
+
+        .live-balance-ribbon {
+            background: var(--primary-light);
+            backdrop-filter: blur(2px);
+            border-left: 5px solid var(--primary);
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .live-balance-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .live-balance-value {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .swipe-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tally-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+            min-width: 750px; 
+        }
+        .tally-table th {
+            background-color: rgba(15, 23, 42, 0.1);
+            color: var(--text-dark);
+            font-weight: 800;
+            padding: 14px 16px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        .tally-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            white-space: nowrap;
+            font-weight: 600; /* Bolder font weight so text doesn't dissolve into background images */
+        }
+        
+        .tally-table tbody tr:hover { background-color: rgba(255,255,255,0.4); }
+        
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .debit-amt { color: var(--danger); font-weight: 700; }
+        .credit-amt { color: var(--success); font-weight: 700; }
+        
+        .status-badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-active { background-color: #bbf7d0; color: #16a34a; border: 1px solid #16a34a; }
+        .status-default { background-color: #fca5a5; color: #dc2626; border: 1px solid #dc2626; }
+
+        .sub-narration { font-size: 11px; color: #334155; display: block; margin-top: 3px; font-weight: 600; }
+        .math-trace { font-size: 11px; color: #000000; font-style: italic; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 3px; display: inline-block; margin-top: 2px; border: 1px solid var(--border); }
+        
+        .mode-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .mode-cash { background: #fef3c7; color: #b45309; border: 1px solid #b45309; }
+        .mode-bank { background: #e0f2fe; color: #0369a1; border: 1px solid #0369a1; }
+        .days-badge { background: rgba(255,255,255,0.8); color: #000000; font-weight: 700; border: 1px solid var(--border); }
+
+        .row-action-links { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; margin-top: 8px; }
+        .row-action-links span { cursor: pointer; font-weight: 700; }
+        .row-action-links .edit-link { color: #1d4ed8; background-color: rgba(255,255,255,0.9); padding: 2px 8px; border-radius: 4px; border: 1px solid #2563eb; }
+        .row-action-links .swap-link { color: #b45309; background-color: rgba(255,255,255,0.9); padding: 2px 8px; border-radius: 4px; border: 1px solid #d97706; }
+        .row-action-links .del-link { color: var(--danger); background-color: rgba(255,255,255,0.9); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--danger); }
+        .lock-badge { font-size: 10px; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; font-weight: bold; border: 1px solid var(--border); }
+
+        .ledger-meta-header {
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .extra-statement-tab {
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .unified-entry-bar {
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .inline-inputs {
+            display: grid;
+            grid-template-columns: 1.2fr 1.5fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .action-button-row { display: flex; gap: 12px; }
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .action-btn.give-bg { background-color: var(--danger); }
+        .action-btn.take-bg { background-color: var(--success); }
+        .action-btn:disabled { background-color: #cbd5e1 !important; color: #94a3b8 !important; cursor: not-allowed; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(1px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 24px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 550px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+        
+.desk-footer-stamp{
+    width:fit-content;
+
+    margin:40px auto 20px auto;
+
+    padding:10px 25px;
+
+    font-size:15px;
+    font-weight:800;
+
+    background:rgba(255,255,255,0.12);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:30px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.25);
+
+    color:#000;
+
+    text-shadow:
+        0 0 8px rgba(255,215,0,.4),
+        0 2px 5px rgba(0,0,0,.7);
+
+    letter-spacing:1px;
+
+    text-align:center;
+}
+        body.auth-mode .desk-footer-stamp {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 20px 0;
+            margin-top: auto;
+        }
+
+        .drawer-customer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.05);
+            margin: 4px 0;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .drawer-customer-link {
+            cursor: pointer;
+            flex: 1;
+            font-size: 13px;
+            color: #e2e8f0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .report-panel {
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .customer-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 15px;
+        }
+        .customer-meta-card {
+            background: var(--card);
+            backdrop-filter: blur(2px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .customer-meta-card:hover {
+            border-color: #0f172a;
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .view-header-title {
+            color: var(--text-dark);
+            margin: 10px 0 15px 0;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.9);
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 768px) {
+    .inline-inputs { grid-template-columns: 1fr; gap: 8px; }
+    .summary-card { grid-template-columns: 1fr; }
+    .extra-statement-tab { flex-direction: column; gap: 12px; text-align: center; }
+}
+
+body.profile-lock > *:not(#profile-edit-inline) {
+    pointer-events: none;
+}
+
+#profile-edit-inline {
+    pointer-events: auto;
+}
+.restore-btn{
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:8px 15px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.delete-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:8px 15px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.restore-btn:hover{
+    background:#15803d;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+.recycling-page,
+.recycle-page{
+    width:100%;
+    min-height:calc(100vh - 120px);
+    padding:35px;
+}
+
+.recycle-title-row{
+    margin-bottom:25px;
+}
+
+.recycle-title-row h1{
+    font-size:42px;
+    color:#0f172a;
+    margin-bottom:8px;
+}
+
+.recycle-title-row p{
+    color:#ffffff;
+    font-size:16px;
+    font-weight:600;
+    text-shadow:0 2px 5px rgba(0,0,0,.8);
+}
+
+/* NEW */
+.recycle-table-wrapper{
+    width:100%;
+    max-height:70vh;
+    overflow:auto;
+}
+
+/* CHANGED */
+.recycle-table-card{
+    width:100%;
+    background:rgba(255,255,255,.88);
+    backdrop-filter:blur(10px);
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    overflow:hidden;
+}
+
+.recycle-table{
+    width:max-content;
+    min-width:100%;
+    border-collapse:collapse;
+}
+
+.recycle-table th{
+    background:#f1f5f9;
+    padding:22px;
+    font-size:17px;
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+.recycle-table td{
+    padding:22px;
+    font-size:16px;
+    border-top:1px solid #e5e7eb;
+}
+body{
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+
+    -webkit-touch-callout:none;
+}
+@media (max-width:768px){
+
+    .recycle-page{
+        padding:15px;
+    }
+
+    .recycle-title-row h1{
+        font-size:30px;
+    }
+
+    .recycle-table th,
+    .recycle-table td{
+        padding:12px;
+        font-size:14px;
+        white-space:nowrap;
+    }
+}
+</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body class="auth-mode">
+
+    <div class="ganesha-text-banner">શ્રી ગણેશાય નમઃ</div>
+
+    <div class="app-bar hidden" id="main-navbar-bar">
+        <div class="nav-left-group">
+            <button id="menu-toggle-btn" class="menu-toggle-btn hidden" onclick="toggleDrawer(true)">☰</button>
+            <button id="back-btn" class="back-btn" onclick="exitToDashboardView()">←</button>
+            <span id="app-title" style="font-size: 18px; font-weight: bold;">Rojmel</span>
+        </div>
+        
+        <div class="profile-section-container">
+            <div id="user-profile-widget" class="profile-section hidden" onclick="toggleProfileDropdown(event)">
+                <div class="profile-avatar">
+
+    <img id="profile-avatar-image"
+         src=""
+         style="
+            display:none;
+            width:32px;
+            height:32px;
+            border-radius:50%;
+            object-fit:cover;
+         ">
+
+    <span id="profile-avatar-char">R</span>
+
+</div>
+                <span id="profile-display-name" style="font-weight:700;">System Admin</span>
+                <span style="font-size:10px; margin-left:2px;">▼</span>
+            </div>
+            <div id="profile-dropdown-menu" class="profile-dropdown-menu">
+
+    <button class="dropdown-logout-btn"
+            onclick="openProfileEditInline()">
+        ✏️ Edit Profile
+    </button>
+<button class="dropdown-logout-btn"
+onclick="changePassword()">
+🔑 Change Password
+</button>
+
+    <button class="dropdown-logout-btn" onclick="backupDatabase()">
+📤 Backup Data
+</button>
+
+<button class="dropdown-logout-btn" onclick="restoreDatabase()">
+📥 Restore Data
+</button>
+
+<input
+type="file"
+id="restore-file"
+accept=".json"
+style="display:none"
+onchange="restoreSelectedFile(event)">
+<button class="dropdown-logout-btn"
+onclick="openRecycleBin()">
+🗑️ Recycle Bin
+</button>
+    <button class="dropdown-logout-btn"
+            onclick="handleLogout()">
+        🔒 Logout Vault
+    </button>
+
+</div>
+
+<input
+type="file"
+id="restore-backup-file"
+accept=".json"
+style="display:none"
+onchange="importBackup(event)">
+        </div>
+    </div>
+<div id="profile-edit-inline" class="hidden"
+     style="position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 0 15px rgba(0,0,0,.2);
+            z-index:9999;
+            width:300px;">
+
+    <h3>Edit Profile</h3>
+<label>Profile Photo</label><br>
+
+<input type="file"
+       id="edit-profile-photo"
+       accept="image/*">
+
+<br><br>
+
+    <div style="margin-bottom:15px;">
+        <label>Name</label><br>
+        <input type="text"
+               id="edit-profile-name"
+               style="width:100%;padding:8px;">
+    </div>
+
+    <div style="margin-bottom:15px;">
+        <label>Mobile Number</label><br>
+        <input type="text"
+               id="edit-profile-phone"
+               readonly
+               style="width:100%;
+                      padding:8px;
+                      background:#f0f0f0;">
+    </div>
+
+    <button class="auth-btn"
+            onclick="saveProfileChanges()">
+        Save
+    </button>
+
+    <button class="auth-btn"
+            style="background:red;"
+            onclick="hideProfileInline()">
+        Cancel
+    </button>
+
+</div>
+    <div id="drawer-overlay" class="drawer-overlay" onclick="toggleDrawer(false)"></div>
+    <div id="side-drawer" class="side-drawer">
+        <div class="drawer-header">
+            <h3>Rojmel Menu</h3>
+            <button style="background:none; border:none; color:white; font-size:20px; cursor:pointer;" onclick="toggleDrawer(false)">✕</button>
+        </div>
+        <div class="drawer-menu-items">
+            <div id="drawer-dash" class="drawer-item active" onclick="navigateFromDrawer('dash')">📊 Dashboard</div>
+            <div id="drawer-custdb" class="drawer-item" onclick="navigateFromDrawer('custdb')">👥 Customer Database</div>
+            <div id="drawer-collection" class="drawer-item" onclick="navigateFromDrawer('collection')">⏱️ Collection Page</div>
+            
+            <div class="drawer-sub-section">
+                <div class="drawer-sub-title">
+                    <span>Quick Accounts Menu</span>
+                    <button onclick="openNewCustomerModal()" style="background:#2563eb; color:white; border:none; padding:2px 6px; font-size:11px; border-radius:4px; cursor:pointer;">+ Add</button>
+                </div>
+                <div id="drawer-customer-list" style="max-height: 240px; overflow-y:auto; display:flex; flex-direction:column;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-screen" class="auth-container">
+        <h2>Create Account</h2>
+        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Enter registration name"></div>
+        <div class="form-group"><label>Contact Mobile Number (10 Digits)</label><input type="tel" id="reg-phone" maxlength="10" placeholder="Enter 10 digit number" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+        <div class="form-group">
+<label>Security Password</label>
+<input type="password"
+       id="reg-password"
+       placeholder="Min 8 chars, Aa1@">
+</div>
+        <div class="form-group"><label>Secret Recovery Hint Key</label><input type="text" id="reg-recovery-key" placeholder="Used if password is forgotten""></div>
+        <button class="auth-btn" onclick="handleRegister()">Register Account</button>
+        <div class="auth-switch">Already registered? <span onclick="switchAuthScreen('login')">Log In</span></div>
+    </div>
+
+    <div id="login-screen" class="auth-container hidden">
+        <h2>Log In</h2>
+        <div class="form-group"><label>Mobile Number (10 Digits)</label><input type="tel" id="login-phone" maxlength="10" placeholder="Enter numerical number" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Enter security credentials"></div>
+        <button class="auth-btn" onclick="handleLogin()">Unlock Rojmel</button>
+<div style="margin-top:10px;text-align:center;">
+    <span
+    onclick="forgotPassword()"
+    style="
+    color:#2563eb;
+    cursor:pointer;
+    font-size:14px;
+    font-weight:bold;
+    ">
+    Forgot Password?
+    </span>
+</div>
+        <div class="auth-switch">New User? <span onclick="switchAuthScreen('register')">Create Account</span></div>
+    </div>
+
+    <div id="main-app" class="main-app">
+        
+      <div id="dashboard-view">
+    <div class="summary-card">
+        <div class="summary-box box-give" style="cursor:pointer;" onclick="showPaymentOutCustomers()"><h3>Total Payment Out Balance (Dr)</h3><p id="total-give">₹0.00</p></div>
+        <div class="summary-box box-take" style="cursor:pointer;" onclick="showPaymentInCustomers()"><h3>Total Payment In Balance (Cr)</h3><p id="total-take">₹0.00</p></div>
+    </div>
+
+    <div class="report-panel">
+        <h4 style="margin-bottom: 12px; color: var(--text-dark);">📊 Download Balance Sheet Statements</h4>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; cursor: pointer; color: var(--text-dark);">
+                <input type="checkbox" id="report-select-all-checkbox" checked onchange="handleReportSelectAllToggle()">
+                Select All Accounts Summary Statement
+            </label>
+            <div id="report-single-customer-select-wrapper" style="display: none;">
+                <label style="font-size: 12px; color: var(--text-dark); font-weight: bold; margin-bottom: 4px;">Choose Target Customers (Hold Ctrl/Cmd to select multiple):</label>
+                <select id="dash-report-selector" multiple></select>
+            </div>
+            <div>
+                <button class="auth-btn" style="width: auto; padding: 10px 20px; font-size: 14px; background: var(--success);" onclick="generateDashboardReport()">Download Selected Statement PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div id="customer-database-view" class="hidden">
+            <div style="margin: 0 0 15px 0; display:flex; justify-content:space-between; align-items:center;">
+                <h2 class="view-header-title">Customer Master Profile Database</h2>
+                <button class="auth-btn" style="width:auto; padding:8px 16px; font-size:13px;" onclick="openNewCustomerModal()">+ Add New Customer</button>
+            </div>
+            <div class="customer-card-grid" id="customer-cards-container"></div>
+        </div>
+
+        <div id="collection-view" class="hidden">
+            <div style="margin: 0 0 10px 0;"><h2 class="view-header-title">Borrowed Payable Registry (Payment In Balance)</h2></div>
+            <div class="swipe-table-wrapper">
+                <table class="tally-table">
+                    <thead><tr><th>Lender Name</th><th class="text-right">Debit Balance</th><th class="text-center">Days Kept Capital</th><th>6-Month Matrix Verification</th></tr></thead>
+                    <tbody id="collection-page-rows"></tbody>
+                </table>
+            </div>
+            <div style="margin: 20px 0 10px 0;"><h2 class="view-header-title">Borrower Receivable Registry (Payment Out Balance)</h2></div>
+            <div class="swipe-table-wrapper">
+                <table class="tally-table">
+                    <thead><tr><th>Borrower Profile Details</th><th class="text-right">Borrowed Credit Balance</th><th class="text-center">Days Kept By You</th><th>6-Month Matrix Verification</th></tr></thead>
+                    <tbody id="borrowed-payables-rows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="ledger-view" class="hidden">
+            <div class="ledger-meta-header">
+                <div>
+                    <h2 id="active-cust-name" style="color:var(--text-dark); font-size:20px;"></h2>
+                    <p id="active-cust-phone" style="font-size:13px; color:var(--text-muted); margin-top:2px; font-weight:700;"></p>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-muted);">Calculated Position</span>
+                    <p id="active-cust-balance" style="font-size:22px; font-weight:800;"></p>
+                </div>
+            </div>
+
+            <div class="live-balance-ribbon">
+                <div class="live-balance-title">📊 Current Net Account Standing:</div>
+                <div id="live-form-balance-tracker" class="live-balance-value">₹0.00 Settled</div>
+            </div>
+
+            <div class="extra-statement-tab">
+                <div>
+
+<div class="unified-entry-bar">
+                <div class="inline-inputs">
+                    <div><label>Amount / Formula Equation</label><input type="text" id="tx-amount-expr" placeholder="e.g. 1500+250" oninput="this.value=this.value.replace(/[^0-9+\-*/]/g,'')"></div>
+                    <div><label>Narration / Particulars Remarks</label><input type="text" id="tx-remark" placeholder="Enter narration notes"></div>
+                    <div><label>Account Mode</label><select id="tx-mode"><option value="Cash">Cash Account</option><option value="Bank">Bank Account Ledger</option></select></div>
+<label>Repayment Date</label>
+<input
+type="date"
+id="tx-repayment-date"
+class="input-field">
+
+                    <div><label>Transaction Date</label><input type="date" id="tx-date"></div>
+                </div>
+                <input type="hidden" id="editing-tx-id" value="">
+                <div class="action-button-row">
+                    <button id="btn-give-action" class="action-btn give-bg" onclick="processUnifiedTransaction('give')">Payment Out</button>
+                    <button id="btn-take-action" class="action-btn take-bg" onclick="processUnifiedTransaction('take')">Payment In</button>
+                    <button id="btn-cancel-edit" class="action-btn hidden" style="background:#64748b;" onclick="resetTransactionForm()">Cancel Edit</button>
+                </div>
+            </div>
+
+        
+          <h4 style="font-size: 14px; color: var(--text-dark);">⚙️ Account Settings & Statement Dashboard</h4>
+                    <p style="font-size: 12px; color: var(--text-muted); font-weight:600;">Modify profile structures or generate statement PDF transcripts instantly.</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="auth-btn" style="width:auto; padding:8px 14px; font-size:13px; background:#64748b;" onclick="triggerCustomerModalDirectly()">✏️ Edit Profile Info</button>
+
+<select id="ledger-period" onchange="handleLedgerPeriodChange()">
+    <option value="thisMonth">This Month</option>
+    <option value="lastMonth">Last Month</option>
+    <option value="last3Months">Last 3 Months</option>
+    <option value="last6Months">Last 6 Months</option>
+    <option value="currentFY">Current Financial Year</option>
+    <option value="lastFY">Last Financial Year</option>
+    <option value="custom">Custom Date Range</option>
+</select>
+
+<div id="custom-date-section" style="display:none;">
+    <input type="date" id="ledger-from-date">
+    <input type="date" id="ledger-to-date">
+</div>
+                    <button class="auth-btn"
+style="width:auto; padding:8px 14px; font-size:13px; background:var(--success);"
+onclick="startLedgerPdfGeneration()">
+📥 Download Ledger Statement
+</button>
+
+                </div>
+            </div>
+
+            <div class="swipe-table-wrapper">
+                <table class="tally-table" id="printable-ledger-table-node">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Date Added</th>
+                            <th style="width: 45%;">Description / Particulars Remarks</th>
+                            <th class="text-right" style="width: 13%;">Payment Out (-)</th>
+                            <th class="text-right" style="width: 13%;">Payment In (+)</th>
+                            <th class="text-right" style="width: 14%;">State & Aging</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inside-ledger-rows"></tbody>
+                </table>
+            </div>
+
+            
+               </div>
+    </div>
+
+
+<div id="recycle-bin-view" class="hidden">
+
+    <div class="recycle-page">
+
+        <div class="recycle-title-row">
+            <h1>🗑 Recycle Bin</h1>
+            <p>Deleted records are automatically removed after 10 days.</p>
+        </div>
+
+        <div class="recycle-table-card">
+
+            <div class="recycle-table-wrapper">
+
+                <table class="recycle-table">
+
+
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Customer</th>
+                            <th>Amount / Balance</th>
+                            <th>Deleted On</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="recycle-bin-rows"></tbody>
+
+                </table>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="desk-footer-stamp">Made in India</div>
+
+    <div id="customer-profile-tab-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width:600px;">
+            <div style="text-align: center; background: var(--primary-light); padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border);">
+                <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight: bold; letter-spacing: 0.5px;">Current Net Account Standing</span>
+                <div id="tab-modal-cust-balance" style="font-weight:800; font-size:24px; margin-top:4px;"></div>
+                <div id="tab-modal-cust-status" style="font-weight:700; font-size:12px; margin-top:4px;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:15px;">
+                <div>
+                    <h3 id="tab-modal-cust-name" style="font-size:18px; color:var(--text-dark);">Customer Profile</h3>
+                    <p id="tab-modal-cust-phone" style="font-size:13px; color:var(--text-muted); font-weight:600;"></p>
+                </div>
+                <button style="background:none; border:none; font-size:22px; cursor:pointer;" onclick="toggleCustomerProfileTabModal(false)">✕</button>
+            </div>
+            <h4 style="font-size:13px; margin-bottom:8px; color:var(--text-dark); text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Recent Entry Logs</h4>
+            <div style="border:1px solid var(--border); border-radius:8px; max-height:200px; overflow-y:auto; background:rgba(248,250,252,0.9); padding:8px;" id="tab-modal-tx-history-log"></div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="auth-btn" style="flex:1; font-size:14px;" id="tab-modal-open-ledger-btn">Open Business Ledger View</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alert-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="border-top: 6px solid var(--danger);">
+            <h3 style="color:var(--danger); font-size: 18px;">⚠️ 6-Month Age Violation Alert</h3>
+            <p style="font-size:13px; margin: 10px 0; color: var(--text-dark); font-weight:600;">The ledger system has intercepted parameters that have remained un-cleared for over 6 months (> 180 days):</p>
+            <div id="alert-modal-list" style="max-height:220px; overflow-y:auto; margin-bottom:20px; border:1px solid var(--border); border-radius:8px; background:#fff1f1; padding:12px;"></div>
+            <button class="auth-btn" style="background:var(--primary);" onclick="dismissAlertModalModal()">Acknowledge & Dismiss (For 10 Days)</button>
+        </div>
+    </div>
+
+    <div id="customer-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="customer-modal-title" style="margin-bottom:15px;">Add New Account Profile</h3>
+            <input type="hidden" id="edit-customer-id" value="">
+            <div class="form-group"><label>Customer Full Name</label><input type="text" id="cust-name" placeholder="e.g. Haresh Bhai" oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')"></div>
+            <div class="form-group">
+    <label>Mobile Number</label>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+        <input
+            type="tel"
+            id="cust-phone"
+            maxlength="15"
+            placeholder="e.g. 9988776655"
+            style="flex:1;"
+            oninput="this.value=normalizePhoneNumber(this.value)">
+
+        <button
+            type="button"
+            onclick="pickCustomerContact()"
+            style="
+                padding:10px 14px;
+                border:none;
+                border-radius:8px;
+                background:#2563eb;
+                color:white;
+                cursor:pointer;
+                font-size:16px;">
+            📞
+        </button>
+    </div>
+</div>	
+
+
+           <div class="form-group"><label>Account Status Flag</label><select id="cust-status"><option value="active">⚡ Active (Calculates in Balance Sheets)</option><option value="default">🚫 Defaulted (Stops Metrics Additions)</option></select></div>
+            <div style="display:flex; flex-direction: column; gap:10px; margin-top:20px;">
+                <div style="display:flex; gap:12px;">
+                    <button class="auth-btn" style="background:#cbd5e1; color:var(--text-dark); flex:1;" onclick="toggleCustomerModal(false)">Cancel</button>
+                    <button class="auth-btn" style="flex:1;" onclick="saveCustomerFormSubmit()">Save Account</button>
+                </div>
+                <button id="btn-delete-customer" class="auth-btn hidden" style="background:var(--danger);" onclick="deleteActiveCustomerProfile()"> Delete Customer Profile Permanently </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBUzq7H1j8uox3NUHLIVWa6EqcCvLWufOE",
+  authDomain: "rojmel9420.firebaseapp.com",
+  projectId: "rojmel9420",
+  storageBucket: "rojmel9420.firebasestorage.app",
+  messagingSenderId: "436715173472",
+  appId: "1:436715173472:web:13731c45cc3ec25bef3505",
+  measurementId: "G-KH0Z15QZZC"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const firestore = firebase.firestore();
+    let db = JSON.parse(localStorage.getItem('rojmel_secure_db_v1')) || {
+    users: {},
+    recycleBin: []
+};
+    let currentUserPhone = localStorage.getItem('rojmel_logged_in_user') || null;
+    let activeCustomerId = null;
+let appReady = true
+
+async function saveCloudData() {
+
+    if (!currentUserPhone) return;
+
+    try {
+
+        db.users[currentUserPhone].lastUpdated = Date.now();
+
+await firestore
+.collection("users")
+.doc(currentUserPhone)
+.set(db.users[currentUserPhone]);
+
+        console.log("Cloud saved");
+
+    } catch(err) {
+
+        console.error(err);
+
+    }
+}
+
+async function loadCloudData(phone) {
+
+    try {
+
+        const snap = await firestore
+            .collection("users")
+            .doc(phone)
+            .get();
+
+        if (snap.exists) {
+
+            db.users[phone] = snap.data();
+
+            localStorage.setItem(
+                'rojmel_secure_db_v1',
+                JSON.stringify(db)
+            );
+        }
+
+    } catch(err) {
+
+        console.error(err);
+
+    }
+}
+
+async function manualSyncFirebase() {
+
+    if (!currentUserPhone) {
+        alert("No user logged in");
+        return;
+    }
+
+    try {
+
+        await saveCloudData();
+
+        alert("✅ Firebase Sync Successful\n" + new Date().toLocaleString());
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("❌ Sync Failed");
+    }
+}
+
+let isProfileEditing = false;
+
+window.addEventListener('DOMContentLoaded', async () => {
+
+if (currentUserPhone) {
+
+await loadCloudData(currentUserPhone);
+
+if (db.users[currentUserPhone]) {
+
+    bootApplication(null);
+
+appReady = true;
+
+    setTimeout(() => {
+        if (typeof checkSixMonthAlerts === 'function') {
+            checkSixMonthAlerts();
+        }
+    }, 1000);
+
+} else {
+
+    switchAuthScreen('register');
+
+}
+
+}
+
+window.addEventListener('click', (e) => {
+    if (!e.target.closest('.profile-section-container')) {
+        document.getElementById('profile-dropdown-menu').classList.remove('show');
+    }
+});
+
+});
+
+    function toggleProfileDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('profile-dropdown-menu').classList.toggle('show');
+    }
+
+    function toggleDrawer(open) {
+        document.getElementById('side-drawer').classList.toggle('open', open);
+        document.getElementById('drawer-overlay').style.display = open ? 'block' : 'none';
+    }
+
+//Passwaord Vaildation
+function switchAuthScreen(screen) {
+        document.getElementById('register-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
+        if(screen === 'register') document.getElementById('register-screen').classList.remove('hidden');
+        else if(screen === 'login') document.getElementById('login-screen').classList.remove('hidden');
+    }
+function isValidIndianMobile(mobile){
+
+    mobile = mobile.trim();
+
+    if(!/^[6-9]\d{9}$/.test(mobile)){
+        return false;
+    }
+
+    const blockedNumbers = [
+        "1111111111",
+        "2222222222",
+        "3333333333",
+        "4444444444",
+        "5555555555",
+        "6666666666",
+        "7777777777",
+        "8888888888",
+        "9999999999",
+        "1234567890",
+        "0987654321",
+        "0123456789"
+    ];
+
+    if(blockedNumbers.includes(mobile)){
+        return false;
+    }
+
+    if(new Set(mobile).size < 4){
+        return false;
+    }
+
+    return true;
+}
+    async function handleRegister() {
+
+    const name = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+if(!isValidIndianMobile(phone)){
+    alert("Please enter a valid Indian mobile number.");
+    return;
+}
+    const password = document.getElementById('reg-password').value;
+if(!isStrongPassword(password)){
+    alert(
+        "Password must contain:\n\n" +
+        "• Minimum 8 characters\n" +
+        "• 1 Uppercase letter\n" +
+        "• 1 Lowercase letter\n" +
+        "• 1 Number\n" +
+        "• 1 Special character"
+    );
+    return;
+}
+    const key = document.getElementById('reg-recovery-key').value.trim();
+
+    // Empty check
+    if(!name || !phone || !password || !key){
+        alert("Please complete all fields.");
+        return;
+    }
+
+    // Mobile validation
+    if(!/^[6-9][0-9]{9}$/.test(phone)){
+        alert("Enter a valid Indian mobile number.");
+        return;
+    }
+
+    // Reject repeated numbers
+    if(/^(\d)\1{9}$/.test(phone)){
+        alert("Invalid mobile number.");
+        return;
+    }
+
+    // Password validation
+    const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/;
+
+    if(!passwordRegex.test(password)){
+        alert(
+            "Password must contain:\n\n" +
+            "• Minimum 8 characters\n" +
+            "• 1 Uppercase letter\n" +
+            "• 1 Lowercase letter\n" +
+            "• 1 Number\n" +
+            "• 1 Special character"
+        );
+        return;
+    }
+
+    // Existing account check
+    if(db.users[phone]){
+        alert("Account already exists with this mobile number.");
+        return;
+    }
+
+    db.users[phone] = {
+        name,
+        password,
+        recoveryKey: key,
+        customers: {}
+    };
+await firestore
+    .collection("users")
+    .doc(phone)
+    .set(db.users[phone]);
+
+    saveDatabase();
+
+
+    alert("Account registered successfully.");
+
+    switchAuthScreen('login');
+}
+
+    async function handleLogin() {
+
+    const phone = document.getElementById('login-phone').value.trim();
+
+    if (!isValidIndianMobile(phone)) {
+        alert("Please enter a valid Indian mobile number.");
+        return;
+    }
+
+    const password = document.getElementById('login-password').value;
+
+    // Set current user first
+    currentUserPhone = phone;
+    localStorage.setItem('rojmel_logged_in_user', phone);
+
+    // Load latest data from Firebase
+    await loadCloudData(phone);
+
+    if (
+    db.users[phone] &&
+    db.users[phone].password === password
+) {
+
+    document.getElementById('recycle-bin-view')
+        .classList.add('hidden');
+
+    bootApplication(null);
+
+} else {
+
+    currentUserPhone = null;
+    localStorage.removeItem('rojmel_logged_in_user');
+
+    alert("Invalid pairing profile matching credentials.");
+}
+}
+// Password Change
+function changePassword(){
+
+    if(!currentUserPhone) return;
+
+    let oldPass = prompt(
+        "Enter current password"
+    );
+
+    if(
+        oldPass !==
+        db.users[currentUserPhone].password
+    ){
+        alert("Current password is incorrect.");
+        return;
+    }
+
+    let newPass = prompt(
+        "Enter new password"
+    );
+
+    if(!newPass) return;
+
+    const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/;
+
+    if(!passwordRegex.test(newPass)){
+        alert(
+        "Password must contain:\n" +
+        "• 8 characters\n" +
+        "• Uppercase\n" +
+        "• Lowercase\n" +
+        "• Number\n" +
+        "• Special Character"
+        );
+        return;
+    }
+
+    db.users[currentUserPhone].password =
+    newPass;
+
+    saveDatabase();
+
+    alert("Password changed successfully.");
+}
+
+//forget password
+function forgotPassword(){
+
+    const phone = prompt(
+        "Enter your registered mobile number"
+    );
+
+    if(!phone) return;
+
+    if(!db.users[phone]){
+        alert("Account not found.");
+        return;
+    }
+
+    const key = prompt(
+        "Enter Secret Recovery Hint Key"
+    );
+
+    if(key === db.users[phone].recoveryKey){
+
+        alert(
+            "Your Password is:\n\n" +
+            db.users[phone].password
+        );
+
+    }else{
+
+        alert("Recovery key does not match.");
+
+    }
+}
+
+   function handleLogout() {
+
+    currentUserPhone = null;
+
+    // Hide Edit Profile section if open
+    let editForm = document.getElementById('profile-edit-inline');
+
+    if (editForm) {
+        editForm.classList.add('hidden');
+    }
+
+    let summaryCard = document.querySelector('.summary-card');
+
+    if (summaryCard) {
+        summaryCard.classList.remove('hidden');
+    }
+
+    localStorage.removeItem('rojmel_logged_in_user');
+    sessionStorage.removeItem('rojmel_active_customer_id');
+
+    // Hide all app screens
+    document.getElementById('recycle-bin-view')?.classList.add('hidden');
+    document.getElementById('dashboard-view')?.classList.add('hidden');
+    document.getElementById('customer-database-view')?.classList.add('hidden');
+    document.getElementById('collection-view')?.classList.add('hidden');
+    document.getElementById('ledger-view')?.classList.add('hidden');
+
+    // Close profile menu
+    document.getElementById('profile-dropdown-menu')?.classList.remove('show');
+
+    // Hide app
+    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('main-navbar-bar').classList.add('hidden');
+    document.getElementById('user-profile-widget').classList.add('hidden');
+
+    document.body.classList.remove('app-mode');
+    document.body.classList.add('auth-mode');
+
+    toggleDrawer(false);
+
+    switchAuthScreen('login');
+}
+
+    function bootApplication(targetCustomerId) {
+
+    document.getElementById('recycle-bin-view')
+        .classList.add('hidden');
+
+    document.getElementById('dashboard-view')
+        .classList.remove('hidden');
+        document.body.classList.remove('auth-mode');
+        document.body.classList.add('app-mode');
+        
+        document.getElementById('register-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').style.display = 'block';
+        document.getElementById('main-navbar-bar').classList.remove('hidden');
+        document.getElementById('menu-toggle-btn').classList.remove('hidden');
+        
+        let userData = db.users[currentUserPhone];
+
+document.getElementById('profile-display-name').innerText =
+    userData.name;
+
+if (userData.photo) {
+
+    let img = document.getElementById('profile-avatar-image');
+
+    img.src = userData.photo;
+
+    img.style.display = "block";
+img.style.width = "32px";
+img.style.height = "32px";
+img.style.borderRadius = "50%";
+img.style.objectFit = "cover";
+
+    document.getElementById('profile-avatar-char').style.display =
+        "none";
+
+} else {
+
+    document.getElementById('profile-avatar-char').innerText =
+        userData.name.charAt(0).toUpperCase();
+
+}
+
+document.getElementById('user-profile-widget')
+    .classList.remove('hidden');
+
+buildLeftMenuCustomerList();
+populateDashboardReportDropdown();
+
+showDashboard();
+
+
+console.log(
+    "Timestamp in scanner:",
+    localStorage.getItem(
+        'rojmel_last_alert_time_stamp_v1'
+    )
+);
+executeTenDayIntervalAuditScanner();
+    }
+
+    function buildLeftMenuCustomerList() {
+        const container = document.getElementById('drawer-customer-list');
+        container.innerHTML = '';
+        const customers = db.users[currentUserPhone].customers;
+        
+        let keys = Object.keys(customers);
+        if(keys.length === 0){
+            container.innerHTML = '<div style="padding:10px; font-size:12px; color:#cbd5e1; text-align:center;">No accounts found.</div>';
+            return;
+        }
+        keys.forEach(id => {
+            const c = customers[id];
+            const row = document.createElement('div');
+            row.className = 'drawer-customer-row';
+            
+            const link = document.createElement('div');
+            link.className = 'drawer-customer-link';
+            link.innerText = `👤 ${c.name}`;
+            link.onclick = () => { toggleDrawer(false); openCustomerProfileTabModal(id); };
+            
+            row.appendChild(link);
+            container.appendChild(row);
+        });
+    }
+
+    function handleReportSelectAllToggle() {
+        const isAll = document.getElementById('report-select-all-checkbox').checked;
+        const selectWrapper = document.getElementById('report-single-customer-select-wrapper');
+        selectWrapper.style.display = isAll ? 'none' : 'block';
+    }
+
+    function populateDashboardReportDropdown() {
+        const dropdown = document.getElementById('dash-report-selector');
+        dropdown.innerHTML = '';
+        const customers = db.users[currentUserPhone].customers;
+        Object.keys(customers).forEach(id => {
+            let option = document.createElement('option');
+            option.value = id;
+            option.innerText = customers[id].name;
+            dropdown.appendChild(option);
+        });
+    }
+
+    function navigateFromDrawer(view) {
+        toggleDrawer(false);
+        if(view === 'dash') showDashboard();
+        if(view === 'custdb') showCustomerDatabaseTab();
+        if(view === 'collection') showCollectionPage();
+    }
+
+    function exitToDashboardView() {
+        sessionStorage.removeItem('rojmel_active_customer_id');
+        showCustomerDatabaseTab();
+    }
+
+    function evaluateMathExpression(str) {
+        let cleanStr = str.replace(/×/g, '*').replace(/÷/g, '/').replace(/[^0-9+\-*/().]/g, '');
+        try { 
+            let calc = Function(`"use strict"; return (${cleanStr})`)(); 
+            return (calc !== undefined && !isNaN(calc)) ? calc : null;
+        } catch(e) { return null; }
+    }
+
+    function showDashboard() {
+        activeCustomerId = null;
+        sessionStorage.removeItem('rojmel_active_customer_id');
+document.getElementById('recycle-bin-view').classList.add('hidden');
+        document.getElementById('ledger-view').classList.add('hidden');
+        document.getElementById('collection-view').classList.add('hidden');
+        document.getElementById('customer-database-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.remove('hidden');
+        
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('menu-toggle-btn').style.display = 'block';
+        
+        document.getElementById('drawer-collection').classList.remove('active');
+        document.getElementById('drawer-custdb').classList.remove('active');
+        document.getElementById('drawer-dash').classList.add('active');
+        document.getElementById('app-title').innerText = "Rojmel";
+        
+        calculateMetrics();
+const customers =
+    db.users[currentUserPhone].customers;
+
+Object.values(customers).forEach(c => {
+
+    c.transactions.forEach(t => {
+
+        if (!t.repaymentDate) return;
+
+        const today = new Date();
+
+        const due = new Date(t.repaymentDate);
+
+        const daysLeft = Math.ceil(
+            (due - today) /
+            (1000 * 60 * 60 * 24)
+        );
+
+        if (daysLeft >= 0 && daysLeft <= 3) {
+            console.log(
+                `${c.name} repayment due on ${t.repaymentDate}`
+            );
+        }
+
+    });
+
+});
+    }
+
+    function showCustomerDatabaseTab() {
+        activeCustomerId = null;
+        sessionStorage.removeItem('rojmel_active_customer_id');
+document.getElementById('recycle-bin-view').classList.add('hidden');
+        document.getElementById('ledger-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.add('hidden');
+        document.getElementById('collection-view').classList.add('hidden');
+        document.getElementById('customer-database-view').classList.remove('hidden');
+
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('menu-toggle-btn').style.display = 'block';
+
+        document.getElementById('drawer-dash').classList.remove('active');
+        document.getElementById('drawer-collection').classList.remove('active');
+        document.getElementById('drawer-custdb').classList.add('active');
+        document.getElementById('app-title').innerText = "Rojmel Customer Database";
+
+        renderCustomerDatabaseTabGrid();
+    }
+
+    function showCollectionPage() {
+        activeCustomerId = null;
+        sessionStorage.removeItem('rojmel_active_customer_id');
+document.getElementById('recycle-bin-view').classList.add('hidden');
+        document.getElementById('ledger-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.add('hidden');
+        document.getElementById('customer-database-view').classList.add('hidden');
+        document.getElementById('collection-view').classList.remove('hidden');
+        
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('menu-toggle-btn').style.display = 'block';
+        
+        document.getElementById('drawer-dash').classList.remove('active');
+        document.getElementById('drawer-custdb').classList.remove('active');
+        document.getElementById('drawer-collection').classList.add('active');
+        document.getElementById('app-title').innerText = "Collection Ledger Page";
+        
+        renderCollectionPageTables(); 
+    }
+
+    function getCustomerBalance(customerObj) {
+        let bal = 0;
+        if (!customerObj.transactions) return 0;
+        customerObj.transactions.forEach(t => {
+            if(t.type === 'give') bal -= t.amount;
+            if(t.type === 'take') bal += t.amount;
+        });
+        return bal;
+    }
+
+    function calculateMetrics() {
+        let give = 0, take = 0;
+        const customers = db.users[currentUserPhone].customers;
+        Object.keys(customers).forEach(id => {
+            const c = customers[id];
+            if(c.status === 'default') return; 
+            let bal = getCustomerBalance(c);
+            if(bal < 0) give += Math.abs(bal);
+            if(bal > 0) take += bal;
+        });
+        document.getElementById('total-give').innerText = `₹${give.toFixed(2)}`;
+        document.getElementById('total-take').innerText = `₹${take.toFixed(2)}`;
+    }
+
+    function renderCustomerDatabaseTabGrid() {
+        const container = document.getElementById('customer-cards-container');
+        container.innerHTML = '';
+        const customers = db.users[currentUserPhone].customers;
+
+        if(Object.keys(customers).length === 0) {
+            container.innerHTML = '<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--text-dark); background: var(--card); border-radius:12px;">No records available inside the Customer Database.</div>';
+            return;
+        }
+
+        Object.keys(customers).forEach(id => {
+            const c = customers[id];
+            let bal = getCustomerBalance(c);
+            let balText = bal === 0 ? '₹0.00 Settled' : bal < 0 ? `₹${Math.abs(bal).toFixed(2)} Payment Out (Dr)` : `₹${bal.toFixed(2)} Payment In (Cr)`;
+            let balStyle = bal === 0 ? 'color:var(--text-muted);' : bal < 0 ? 'color:var(--danger);' : 'color:var(--success);';
+
+            let card = document.createElement('div');
+            card.className = 'customer-meta-card';
+            card.onclick = () => openCustomerProfileTabModal(id);
+            card.innerHTML = `
+                <div style="font-weight:700; font-size:16px; color:var(--text-dark); margin-bottom:4px;">👤 ${c.name}</div>
+                <div style="font-size:12px; color:var(--text-dark); margin-bottom:10px; font-weight:600;">📱 ${c.phone}</div>
+                <div style="font-size:13px; font-weight:700; ${balStyle}">${balText}</div>
+                <div style="margin-top:8px;"><span class="status-badge ${c.status === 'default' ? 'status-default' : 'status-active'}">${c.status === 'default' ? 'Defaulted' : 'Active'}</span></div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderCollectionPageTables() {
+        const tbodyReceivables = document.getElementById('collection-page-rows');
+        const tbodyPayables = document.getElementById('borrowed-payables-rows');
+        tbodyReceivables.innerHTML = '';
+        tbodyPayables.innerHTML = '';
+        const customers = db.users[currentUserPhone].customers;
+        let countRec = 0, countPay = 0;
+
+        Object.keys(customers).forEach(id => {
+            const c = customers[id];
+            if(c.status === 'default') return; 
+            let bal = getCustomerBalance(c);
+
+            let totalDays = 0;
+            let txList = c.transactions.filter(t => t.type === (bal > 0 ? 'take' : 'give'));
+            txList.forEach(t => {
+                let end = t.clearedDate ? new Date(t.clearedDate) : new Date();
+                totalDays += Math.floor(Math.max(0, end - new Date(t.rawTimestamp)) / (1000 * 60 * 60 * 24));
+            });
+            let avgDays = txList.length > 0 ? Math.round(totalDays / txList.length) : 0;
+            let hasSixMonthOverdue = txList.some(t => {
+                let end = t.clearedDate ? new Date(t.clearedDate) : new Date();
+                return (Math.floor((end - new Date(t.rawTimestamp)) / (1000 * 60 * 60 * 24)) > 180);
+            });
+
+            let matrixStatusBadge = hasSixMonthOverdue ? 
+                `<span class="mode-badge" style="background:var(--danger-light); color:var(--danger); padding:4px 8px; border:1px solid var(--danger);">⚠️ AGE CRITICAL > 6 MO</span>` :
+                `<span class="mode-badge" style="background:var(--success-light); color:var(--success); padding:4px 8px; border:1px solid var(--success);">✅ Verified</span>`;
+
+            if(bal > 0) { 
+                countRec++;
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => openCustomerProfileTabModal(id);
+                tr.innerHTML = `
+                    <td><strong>${c.name}</strong><span class="sub-narration">📱 ${c.phone}</span></td>
+                    <td class="text-right credit-amt">₹${bal.toFixed(2)}</td>
+                    <td class="text-center"><span class="mode-badge days-badge" style="font-size:12px; padding:4px 8px;">${avgDays} Days Owed</span></td>
+                    <td>${matrixStatusBadge}</td>
+                `;
+                tbodyReceivables.appendChild(tr);
+            } else if(bal < 0) { 
+                countPay++;
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => openCustomerProfileTabModal(id);
+                tr.innerHTML = `
+                    <td><strong>${c.name}</strong><span class="sub-narration">📱 ${c.phone}</span></td>
+                    <td class="text-right debit-amt">₹${Math.abs(bal).toFixed(2)}</td>
+                    <td class="text-center"><span class="mode-badge days-badge" style="font-size:12px; padding:4px 8px; background:var(--warning-light); color:var(--warning); border:1px solid var(--warning);">${avgDays} Days Held</span></td>
+                    <td>${matrixStatusBadge}</td>
+                `;
+                tbodyPayables.appendChild(tr);
+            }
+        });
+
+        if(countRec === 0) tbodyReceivables.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-dark);">No active asset items.</td></tr>`;
+        if(countPay === 0) tbodyPayables.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-dark);">No active borrowed configurations.</td></tr>`;
+    }
+
+    function openCustomerProfileTabModal(id) {
+        const c = db.users[currentUserPhone].customers[id];
+        if(!c) return;
+
+        document.getElementById('tab-modal-cust-name').innerText = `👤 ${c.name}`;
+        document.getElementById('tab-modal-cust-phone').innerText = `Primary Node Contact Link: ${c.phone}`;
+        
+        let bal = getCustomerBalance(c);
+        let balText = bal === 0 ? '₹0.00 Balance Settled' : bal < 0 ? `₹${Math.abs(bal).toFixed(2)} Payment Out (Dr)` : `₹${bal.toFixed(2)} Payment In (Cr)`;
+        let balColor = bal === 0 ? 'var(--text-dark)' : bal < 0 ? 'var(--danger)' : 'var(--success)';
+        
+        const balContainer = document.getElementById('tab-modal-cust-balance');
+        balContainer.innerText = balText;
+        balContainer.style.color = balColor;
+
+        const statusContainer = document.getElementById('tab-modal-cust-status');
+        statusContainer.innerText = c.status === 'default' ? '🚫 Profile Blocked / Defaulted' : '⚡ Profile Open & Active';
+        statusContainer.style.color = c.status === 'default' ? 'var(--danger)' : 'var(--success)';
+
+        const logContainer = document.getElementById('tab-modal-tx-history-log');
+        logContainer.innerHTML = '';
+
+        if(!c.transactions || c.transactions.length === 0) {
+            logContainer.innerHTML = '<div style="font-size:12px; color:var(--text-dark); padding:10px; text-align:center;">No records inside ledger indexes.</div>';
+        } else {
+            let reversedTx = [...c.transactions].sort((a,b) => new Date(b.rawTimestamp) - new Date(a.rawTimestamp));
+            reversedTx.forEach(t => {
+                let div = document.createElement('div');
+                div.style = 'padding:6px; border-bottom:1px solid #cbd5e1; font-size:12px; display:flex; justify-content:space-between; font-weight:600; color:#000000;';
+                let amtSign = t.type === 'give' ? `<span style="color:var(--danger); font-weight:700;">- ₹${t.amount.toFixed(2)}</span>` : `<span style="color:var(--success); font-weight:700;">+ ₹${t.amount.toFixed(2)}</span>`;
+                div.innerHTML = `<div style="flex:1;"><strong>${t.date}</strong> - ${t.remark || 'Particular Row'}</div><div>${amtSign}</div>`;
+                logContainer.appendChild(div);
+            });
+        }
+
+        document.getElementById('tab-modal-open-ledger-btn').onclick = () => {
+            toggleCustomerProfileTabModal(false);
+            openCustomerWiseLedger(id);
+        };
+
+        document.getElementById('customer-profile-tab-modal').setAttribute('data-active-id', id);
+        toggleCustomerProfileTabModal(true);
+    }
+
+    function toggleCustomerProfileTabModal(show) {
+        document.getElementById('customer-profile-tab-modal').classList.toggle('hidden', !show);
+    }
+
+    function triggerCustomerModalDirectly() {
+        if(activeCustomerId) openEditCustomerModal(activeCustomerId);
+    }
+
+    function executeTenDayIntervalAuditScanner() {
+        const lastAlertTimestamp = localStorage.getItem('rojmel_last_alert_time_stamp_v1');
+        const currentTime = Date.now();
+        const tenDaysInMillis = 10 * 24 * 60 * 60 * 1000;
+        const customers = db.users[currentUserPhone].customers;
+        const targetContainer = document.getElementById('alert-modal-list');
+        targetContainer.innerHTML = '';
+        let criticalViolationsCount = 0;
+
+        Object.keys(customers).forEach(id => {
+            const c = customers[id];
+            if(c.status === 'default') return;
+            c.transactions.forEach(t => {
+                if(
+    !t.dueStatus ||
+    t.dueStatus !== "closed"
+) {
+                    let durationDays = Math.floor((new Date() - new Date(t.rawTimestamp)) / (1000 * 60 * 60 * 24));
+                    if(durationDays > 180) { 
+                        criticalViolationsCount++;
+                        let directionText = (t.type === 'take') ? 'Payment In (Cr)' : 'Payment Out (Dr)';
+                        let element = document.createElement('div');
+                        element.style = "border-bottom:1px solid var(--border); padding:8px 0; font-size:12px; color: var(--text-dark); font-weight:600;";
+                        element.innerHTML = `<strong>👤 ${c.name}</strong> - <span style="color:var(--danger); font-weight:bold;">₹${t.amount.toFixed(2)}</span><br>Channel: ${directionText} | Age: <strong style="color:var(--danger);">${durationDays} Days Overdue</strong>`;
+                        targetContainer.appendChild(element);
+                    }
+                }
+            });
+        });
+        if (criticalViolationsCount > 0) {
+
+    const lastTime = Number(lastAlertTimestamp || 0);
+
+    // Show alert only if:
+    // 1. Never dismissed before, OR
+    // 2. More than 10 days have passed since dismissal
+
+    if (
+        lastTime === 0 ||
+        currentTime - lastTime >= tenDaysInMillis
+    ) {
+
+        toggleAlertModal(true);
+
+    } else {
+
+        toggleAlertModal(false);
+
+    }
+
+} else {
+
+    toggleAlertModal(false);
+
+}
+
+}
+
+function dismissAlertModalModal() {
+
+
+    localStorage.setItem(
+        'rojmel_last_alert_time_stamp_v1',
+        Date.now().toString()
+    );
+
+    console.log(
+        "Saved:",
+        localStorage.getItem(
+            'rojmel_last_alert_time_stamp_v1'
+        )
+    );
+
+    toggleAlertModal(false);
+
+
+    // Verify immediately after hiding
+    setTimeout(() => {
+        console.log(
+            "Still stored:",
+            localStorage.getItem(
+                'rojmel_last_alert_time_stamp_v1'
+            )
+        );
+    }, 1000);
+
+}
+
+    function toggleAlertModal(show) { document.getElementById('alert-modal').classList.toggle('hidden', !show); }
+    function toggleCustomerModal(show) { document.getElementById('customer-modal').classList.toggle('hidden', !show); }
+
+    function openNewCustomerModal() {
+        document.getElementById('customer-modal-title').innerText = "Add New Account Profile";
+        document.getElementById('edit-customer-id').value = "";
+        document.getElementById('cust-name').value = "";
+        document.getElementById('cust-phone').value = "";
+        document.getElementById('cust-status').value = "active";
+        document.getElementById('btn-delete-customer').classList.add('hidden');
+        toggleCustomerModal(true);
+    }
+
+    function openEditCustomerModal(id) {
+        const c = db.users[currentUserPhone].customers[id];
+        document.getElementById('customer-modal-title').innerText = "Edit Customer Configuration";
+        document.getElementById('edit-customer-id').value = id;
+        document.getElementById('cust-name').value = c.name;
+        document.getElementById('cust-phone').value = c.phone;
+        document.getElementById('cust-status').value = c.status || "active";
+
+        document.getElementById('btn-delete-customer').classList.remove('hidden');
+        toggleCustomerModal(true);
+    }
+
+    function saveCustomerFormSubmit() {
+        const name = document.getElementById('cust-name').value.trim();
+        const phone = normalizePhoneNumber(
+    document.getElementById('cust-phone').value
+);
+        const status = document.getElementById('cust-status').value;        
+const targetId = document.getElementById('edit-customer-id').value;
+        
+        if(!/^[A-Za-z ]+$/.test(name)) { alert("Name must contain alphabets only."); return; }
+        if(!name || !phone) { alert("Please complete input fields."); return; }
+        if(!/^[0-9]{10}$/.test(phone)) { alert("Validation Intercept: Mobile key must be exactly 10 digits."); return; }
+        
+        const currentCustomers = db.users[currentUserPhone].customers;
+        let isDuplicate = Object.keys(currentCustomers).some(id => currentCustomers[id].phone === phone && id !== targetId);
+        if(isDuplicate) { alert("A customer with this phone mapping is already registered."); return; }
+
+        if(targetId) {
+
+    // Prevent changing contact number
+    if (phone !== currentCustomers[targetId].phone) {
+        alert("Contact number cannot be edited.");
+        return;
+    }
+
+    currentCustomers[targetId].name = name;
+    currentCustomers[targetId].status = status;
+
+    alert("Customer configurations updated safely.");
+} else {
+            const newId = 'c_' + Date.now();
+            currentCustomers[newId] = {
+    name,
+    phone,
+    status: status,
+    transactions: []
+};
+            alert("Account profile saved successfully.");
+        }
+
+        saveDatabase();
+        toggleCustomerModal(false);
+        buildLeftMenuCustomerList();
+        populateDashboardReportDropdown();
+        calculateMetrics();
+        
+        if(activeCustomerId && activeCustomerId === targetId) {
+            openCustomerWiseLedger(targetId);
+        } else if (!document.getElementById('customer-database-view').classList.contains('hidden')) {
+            renderCustomerDatabaseTabGrid();
+        } else {
+            showDashboard();
+        }
+    }
+
+    function deleteActiveCustomerProfile() {
+
+    const targetId = document.getElementById('edit-customer-id').value;
+
+    if (!targetId) return;
+
+    // Get customer object
+    let customer = db.users[currentUserPhone].customers[targetId];
+
+    // Calculate customer balance
+    let balance = getCustomerBalance(customer);
+
+    // Prevent deletion if balance exists and customer is not marked default
+    if (balance != 0 && customer.status != "default") {
+
+        alert(
+            "Customer has pending Debit/Credit balance.\n\nOnly customers marked as Default can be deleted."
+        );
+
+        return;
+    }
+
+    if (confirm("Are you sure you want to completely delete this customer profile and all histories? This execution cannot be undone.")) {
+
+    
+
+   if (!db.recycleBin) {
+    db.recycleBin = [];
+}
+
+db.recycleBin.push({
+    type: "customer",
+    deletedAt: new Date().toISOString(),
+    customerId: targetId,
+    customerName: customer.name,
+    customerPhone: customer.phone,
+    totalBalance: balance,
+    transactionCount: customer.transactions ? customer.transactions.length : 0,
+    data: JSON.parse(JSON.stringify(customer))
+});
+
+    delete db.users[currentUserPhone].customers[targetId];
+
+    saveDatabase();
+
+        alert("Customer master record completely deleted.");
+
+        toggleCustomerModal(false);
+
+        buildLeftMenuCustomerList();
+
+        populateDashboardReportDropdown();
+
+        if (activeCustomerId === targetId) {
+
+            showDashboard();
+
+        } else {
+
+            calculateMetrics();
+
+            renderCustomerDatabaseTabGrid();
+
+            renderCollectionPageTables();
+
+        }
+    }
+}
+
+
+    function openCustomerWiseLedger(id) {
+        activeCustomerId = id;
+        sessionStorage.setItem('rojmel_active_customer_id', id);
+        document.getElementById('dashboard-view').classList.add('hidden');
+        document.getElementById('collection-view').classList.add('hidden');
+        document.getElementById('customer-database-view').classList.add('hidden');
+        document.getElementById('ledger-view').classList.remove('hidden');
+        
+        document.getElementById('menu-toggle-btn').style.display = 'none';
+        document.getElementById('back-btn').style.display = 'inline-block';
+
+        const c = db.users[currentUserPhone].customers[id];
+        document.getElementById('app-title').innerText = "Customer Ledger View";
+        document.getElementById('active-cust-name').innerText = `👤 ${c.name}`;
+        document.getElementById('active-cust-phone').innerText = "Linked Account Phone Node: " + c.phone;
+
+        resetTransactionForm();
+        renderInsideLedgerRows();
+    }
+
+    function renderInsideLedgerRows()  {
+        const tbody = document.getElementById('inside-ledger-rows');
+        tbody.innerHTML = '';
+        const c = db.users[currentUserPhone].customers[activeCustomerId];
+
+c.transactions.forEach(t => {
+
+    if(!t.dueStatus){
+        t.dueStatus = "open";
+    }
+
+    if(t.remainingAmount === undefined){
+        t.remainingAmount = t.amount;
+    }
+
+});
+        let runningBalance = 0;
+
+        if(!c.transactions || c.transactions.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-dark);">No entries recorded.</td></tr>`;
+            document.getElementById('active-cust-balance').innerText = "₹0.00 Balance Settled";
+            updateLiveFormBalanceTracker(0);
+            return;
+        }
+        let entries = [...c.transactions].sort((a,b) => new Date(a.rawTimestamp) - new Date(b.rawTimestamp));
+
+        entries.forEach(t => {
+            if(t.type === 'give') runningBalance -= t.amount;
+            if(t.type === 'take') runningBalance += t.amount;
+
+            let endpointDate = t.clearedDate
+    ? new Date(t.clearedDate)
+    : new Date();
+
+let calculatedDays = Math.floor(
+    Math.max(
+        0,
+        endpointDate - new Date(t.rawTimestamp)
+    ) / (1000 * 60 * 60 * 24)
+);
+
+let statusText =
+    `<span class="mode-badge days-badge">${calculatedDays} Days</span>`;
+
+if (
+    calculatedDays > 180 &&
+    t.dueStatus !== "closed"
+) {
+
+    statusText += `
+    <br>
+    <span class="mode-badge"
+    style="background:var(--danger-light);
+    color:var(--danger);
+    border:1px solid var(--danger);">
+    ⚠️ Overdue
+    </span>`;
+}
+
+if (
+    t.dueStatus === "closed" &&
+    t.clearedDate
+) {
+
+    statusText += `
+    <br>
+    <span class="mode-badge"
+    style="background:#dcfce7;
+    color:#16a34a;">
+    ✅ Settled on
+    ${new Date(t.clearedDate)
+        .toLocaleDateString('en-IN')}
+    </span>`;
+}
+
+            let debitText = t.type === 'give' ? `₹${t.amount.toFixed(2)}` : '-';
+            let creditText = t.type === 'take' ? `₹${t.amount.toFixed(2)}` : '-';
+            let balColor = runningBalance < 0 ? 'var(--danger)' : runningBalance > 0 ? 'var(--success)' : 'var(--text-dark)';
+            let mathTraceOutput = t.formulaExpr && t.formulaExpr !== t.amount.toString() ? `<br><span class="math-trace">${t.formulaExpr}</span>` : '';
+
+            let transactionTime = new Date(t.rawTimestamp).getTime();
+let now = Date.now();
+
+// 2. Define expiry thresholds in milliseconds
+const fortyEightHoursMs = 48 * 60 * 60 * 1000;
+const sixMonthsMs = 180 * 24 * 60 * 60 * 1000; // Using 180 days for 6 months
+
+// 3. Determine if actions are locked
+let isEditSwipeLocked = (now - transactionTime) > fortyEightHoursMs;
+let isDeleteLocked = (now - transactionTime) > sixMonthsMs;
+
+// 4. Build the Markup
+let actionMarkup = `<div class="row-action-links">`;
+
+// Edit Button (Locked after 48h)
+if (!isEditSwipeLocked) {
+    actionMarkup += `<span class="edit-link" onclick="startEditTransactionRow('${t.id}')">✏️ Edit</span>`;
+} else {
+    actionMarkup += `<span class="lock-badge">🔒 Locked</span>`;
+}
+
+// Swipe Button (Locked after 48h)
+if (!isEditSwipeLocked) {
+    actionMarkup += `<span class="swap-link" onclick="shortcutToggleWrongEntryType('${t.id}')">🔄 Swipe</span>`;
+}else {
+    actionMarkup += `<span class="lock-badge">🔒 Locked</span>`;
+}
+
+// Delete Button (Locked after 6 months)
+if (!isDeleteLocked) {
+    actionMarkup += `<span class="del-link" onclick="deleteTransactionRow('${t.id}')">❌ Delete</span>`;
+} else {
+    actionMarkup += `<span class="lock-badge">🔒 Locked</span>`;
+}
+
+if(t.dueStatus !== "closed"){
+
+    actionMarkup += `
+    <span class="edit-link"
+    onclick="markTransactionSettled('${t.id}')">
+    ✅ Settle
+    </span>`;
+
+}else{
+
+    actionMarkup += `
+    <span class="lock-badge">
+    ✅ Settled
+    </span>`;
+
+    const reopenAllowed =
+    t.settledTimestamp &&
+    (
+        Date.now() -
+        new Date(t.settledTimestamp).getTime()
+    ) <= (3 * 24 * 60 * 60 * 1000);
+
+if(reopenAllowed){
+
+    actionMarkup += `
+    <span class="edit-link"
+    onclick="reopenTransactionDue('${t.id}')">
+    ↩ Reopen Due
+    </span>`;
+
+}else{
+
+    actionMarkup += `
+    <span class="lock-badge">
+    🔒 Reopen Locked
+    </span>`;
+}
+}
+actionMarkup += `</div>`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${t.date}</strong></td>
+                <td>
+    <div style="color:#000000; font-weight:700;">
+        ${t.remark || '<span style="color:var(--text-muted); font-style:italic">Particular Row Entry</span>'}
+    </div>
+
+    <span class="mode-badge mode-${(t.mode || 'Cash').toLowerCase()}">
+        ${t.mode || 'Cash'}
+    </span>
+
+    ${t.repaymentDate && t.type === 'give' ? `
+    <br>
+    <span style="
+        color:#dc2626;
+        font-size:11px;
+        font-weight:bold;
+    ">
+        📅 Repayment Expected On:
+        ${new Date(t.repaymentDate).toLocaleDateString('en-IN')}
+    </span>
+` : ''}
+
+    ${mathTraceOutput}
+
+    ${actionMarkup}
+</td>
+                <td class="text-right debit-amt">${debitText}</td>
+                <td class="text-right credit-amt">${creditText}</td>
+                <td class="text-right"><span style="color:${balColor}; font-weight:800;">₹${Math.abs(runningBalance).toFixed(2)}</span><br>${statusText}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+        const globalHeaderBal = document.getElementById('active-cust-balance');
+        let textState = runningBalance < 0 ? 'Cr (Payment Out)' : runningBalance > 0 ? 'Dr (Payment In)' : 'Settled';
+        globalHeaderBal.innerText = `₹${Math.abs(runningBalance).toFixed(2)} ${textState}`;
+        globalHeaderBal.style.color = runningBalance < 0 ? 'var(--danger)' : runningBalance > 0 ? 'var(--success)' : 'var(--text-dark)';
+        
+        updateLiveFormBalanceTracker(runningBalance);
+    }
+
+function markTransactionSettled(txId){
+
+    const targetCust =
+        db.users[currentUserPhone]
+        .customers[activeCustomerId];
+
+    const tx =
+        targetCust.transactions.find(
+            t => t.id === txId
+        );
+
+    if(!tx) return;
+
+    tx.remainingAmount = 0;
+
+    tx.dueStatus = "closed";
+
+    tx.clearedDate =
+        new Date().toISOString();
+tx.settledTimestamp = new Date().toISOString();
+
+    saveDatabase();
+
+    renderInsideLedgerRows();
+
+    calculateMetrics();
+}
+
+    function updateLiveFormBalanceTracker(balance) {
+        const tracker = document.getElementById('live-form-balance-tracker');
+        if (balance === 0) {
+            tracker.innerText = "₹0.00 Settled Balance";
+            tracker.style.color = "var(--text-dark)";
+        } else if (balance < 0) {
+            tracker.innerText = `₹${Math.abs(balance).toFixed(2)} You Need To PAY (Debit / Dr)`;
+            tracker.style.color = "var(--danger)";
+        } else {
+            tracker.innerText = `₹${balance.toFixed(2)} You Need To TAKE (Credit / Cr)`;
+            tracker.style.color = "var(--success)";
+        }
+    }
+
+
+
+
+    function triggerScreenFlashNotification(directionType) {
+        const bodyStyle = document.body;
+        const targetClass = (directionType === 'take') ? 'flash-green' : 'flash-red';
+        
+        bodyStyle.classList.add(targetClass);
+        setTimeout(() => {
+            bodyStyle.classList.remove(targetClass);
+        }, 1000);
+    }
+
+    function processUnifiedTransaction(type) {
+
+    const amtInput =
+        document.getElementById('tx-amount-expr').value.trim();
+
+    const remark =
+        document.getElementById('tx-remark').value.trim();
+
+    const selectedMode =
+        document.getElementById('tx-mode').value;
+
+    const customDate =
+        document.getElementById('tx-date').value;
+
+    const repaymentDate =
+        document.getElementById('tx-repayment-date')
+        ? document.getElementById('tx-repayment-date').value
+        : "";
+
+
+    const editingId =
+        document.getElementById('editing-tx-id').value;
+
+    if(!amtInput) return;
+
+    const resolvedVal =
+        evaluateMathExpression(amtInput);
+
+    if(resolvedVal === null || resolvedVal <= 0) {
+        alert("Syntax breakdown inside calculation expressions input.");
+        return;
+    }
+
+    let dateObj =
+        customDate ? new Date(customDate) : new Date();
+if (repaymentDate) {
+
+    const repayDateObj = new Date(repaymentDate);
+
+    if (repayDateObj <= dateObj) {
+
+        alert("Repayment date must be after transaction date.");
+
+        return;
+    }
+}
+
+    const displayDate =
+        dateObj.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+
+    const targetCust =
+        db.users[currentUserPhone]
+        .customers[activeCustomerId];
+        
+        if(editingId) {
+            let index = targetCust.transactions.findIndex(t => t.id === editingId);
+            if(index !== -1) {
+                let txItem = targetCust.transactions[index];
+                let creationTime = new Date(txItem.rawTimestamp).getTime();
+
+let ageInHours = (Date.now() - creationTime) / (1000 * 60 * 60);
+
+if (ageInHours > 48) {
+    alert("Transaction older than 48 hours cannot be edited.");
+    return;
+}
+                txItem.amount = resolvedVal;
+                txItem.formulaExpr = amtInput;
+                txItem.remark = remark;
+                txItem.mode = selectedMode;
+                txItem.date = displayDate;
+                txItem.rawTimestamp = dateObj.toISOString();
+            }
+        } else {
+            if(type === 'give') {
+                targetCust.transactions.forEach(t => { if(t.type === 'take' && !t.clearedDate) { t.clearedDate = dateObj.toISOString(); } });
+            }
+            targetCust.transactions.push({
+    id: 'tx_' + Date.now() + Math.random().toString(36).substring(2,5),
+
+    amount: resolvedVal,
+    formulaExpr: amtInput,
+    type: type,
+    remark: remark,
+    mode: selectedMode,
+
+    date: displayDate,
+    rawTimestamp: dateObj.toISOString(),
+
+    dueStatus: "open",
+    remainingAmount: resolvedVal,
+
+    clearedDate: null,
+
+    entryCreatedTimestamp: new Date().toISOString(),
+
+    repaymentDate: type === 'give'
+        ? repaymentDate
+        : null
+});
+        }
+        
+        saveDatabase();
+        triggerScreenFlashNotification(type);
+
+        resetTransactionForm();
+        renderInsideLedgerRows();
+        calculateMetrics();
+    }
+
+    function shortcutToggleWrongEntryType(txId) {
+        const targetCust = db.users[currentUserPhone].customers[activeCustomerId];
+        let txItem = targetCust.transactions.find(t => t.id === txId);
+        if(!txItem) return;
+
+        let creationTime = new Date(txItem.rawTimestamp).getTime();
+
+        if ((Date.now() - creationTime) / (1000 * 60 * 60) > 48) {
+            alert("Security Lockout: This log entry is older than 48 hours and can no longer be modified.");
+            return;
+        }
+
+        const oldType = txItem.type;
+        const newType = (oldType === 'give') ? 'take' : 'give';
+        txItem.type = newType;
+
+        saveDatabase();
+        triggerScreenFlashNotification(newType);
+        
+        if (document.getElementById('editing-tx-id').value === txId) resetTransactionForm();
+        renderInsideLedgerRows();
+        calculateMetrics();
+    }
+
+    function startEditTransactionRow(txId) {
+        const targetCust = db.users[currentUserPhone].customers[activeCustomerId];
+        const tx = targetCust.transactions.find(t => t.id === txId);
+        if(!tx) return;
+
+        document.getElementById('tx-amount-expr').value = tx.formulaExpr || tx.amount.toString();
+        document.getElementById('tx-remark').value = tx.remark || "";
+        document.getElementById('tx-mode').value = tx.mode || "Cash";
+        if(tx.rawTimestamp) document.getElementById('tx-date').value = tx.rawTimestamp.split('T')[0];
+        document.getElementById('editing-tx-id').value = txId;
+
+        if (tx.type === 'give') {
+            document.getElementById('btn-give-action').innerText = "Correct Payment Out";
+            document.getElementById('btn-give-action').disabled = false;
+            document.getElementById('btn-take-action').innerText = "Locked (Type Bound)";
+            document.getElementById('btn-take-action').disabled = true;
+        } else {
+            document.getElementById('btn-take-action').innerText = "Correct Payment In";
+            document.getElementById('btn-take-action').disabled = false;
+            document.getElementById('btn-give-action').innerText = "Locked (Type Bound)";
+            document.getElementById('btn-give-action').disabled = true;
+        }
+
+        document.getElementById('btn-cancel-edit').classList.remove('hidden');
+        document.getElementById('tx-amount-expr').focus();
+        document.querySelector('.unified-entry-bar').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetTransactionForm() {
+        document.getElementById('tx-amount-expr').value = '';
+        document.getElementById('tx-remark').value = '';
+        document.getElementById('tx-date').valueAsDate = new Date();
+        document.getElementById('tx-mode').value = "Cash";
+        document.getElementById('editing-tx-id').value = '';
+        
+        const btnGive = document.getElementById('btn-give-action');
+        const btnTake = document.getElementById('btn-take-action');
+        
+        btnGive.innerText = "Payment Out";
+        btnGive.disabled = false;
+        btnTake.innerText = "Payment In";
+        btnTake.disabled = false;
+        
+        document.getElementById('btn-cancel-edit').classList.add('hidden');
+    }
+
+    function deleteTransactionRow(txId) {
+    const targetCust = db.users[currentUserPhone].customers[activeCustomerId];
+    const tx = targetCust.transactions.find(t => t.id === txId);
+
+    if (!tx) return;
+
+    let transactionTime = new Date(tx.rawTimestamp);
+    let expiryDate = new Date(transactionTime);
+    expiryDate.setMonth(expiryDate.getMonth() + 6);
+
+    if (Date.now() > expiryDate.getTime()) {
+        alert("Transaction older than 6 months cannot be deleted.");
+        return;
+    }
+
+    if (confirm("Delete this transaction entry permanently? This action cannot be reversed.")) {
+
+        if (!db.recycleBin) {
+            db.recycleBin = [];
+        }
+
+      db.recycleBin.push({
+    type: "transaction",
+    deletedAt: new Date().toISOString(),
+    customerId: activeCustomerId,
+    customerName: targetCust.name,
+    customerPhone: targetCust.phone,
+    amount: tx.amount,
+    transactionDate: tx.rawTimestamp,
+    data: JSON.parse(JSON.stringify(tx))
+});
+
+        // ACTUAL DELETE
+        targetCust.transactions = targetCust.transactions.filter(
+            transaction => transaction.id !== txId
+        );
+
+        saveDatabase();
+
+        if (document.getElementById('editing-tx-id').value == txId) {
+            resetTransactionForm();
+        }
+
+        renderInsideLedgerRows();
+        calculateMetrics();
+    }
+}
+
+    function generateTransactionWiseLedgerReport() {
+
+  
+
+    const c = db.users[currentUserPhone].customers[activeCustomerId];
+
+    if(!c || c.transactions.length === 0) {
+        alert("No transaction parameters available for export.");
+        return;
+    }
+
+    const fromDate = window.selectedFromDate;
+    const toDate = window.selectedToDate;
+
+    alert(`From: ${fromDate}\nTo: ${toDate}`);
+
+    if (!fromDate || !toDate) {
+        alert("Please select a valid period.");
+        return;
+    }
+
+    let parentNode = document.createElement('div');
+
+    parentNode.style = `
+    font-family:sans-serif;
+    color:#334155;
+    background:#fff;
+    `;
+
+
+       
+        let headerBlock = `
+<div style="
+display:flex;
+align-items:center;
+border-bottom:2px dashed #0f172a;
+padding-bottom:10px;
+margin-bottom:15px;
+">
+
+<img
+src="https://i.postimg.cc/q7LbZN43/Compress-JPEG-Online-img-512x512-removebg-preview.png"
+crossorigin="anonymous"
+style="
+width:70px;
+height:70px;
+margin-right:10px;
+flex-shrink:0;
+">
+
+<div style="
+flex:1;
+text-align:center;
+">
+
+<h1 style="
+color:#8b5a2b;
+margin:0;
+font-size:18px;
+font-weight:bold;
+line-height:1.1;
+">
+॥ શ્રી ગણેશાય નમઃ ॥
+</h1>
+
+<h2 style="
+color:#0f172a;
+margin:2px 0;
+font-size:26px;
+font-weight:800;
+letter-spacing:1px;
+line-height:1.1;
+">
+ROJMEL LEDGER VAULT
+</h2>
+
+<p style="font-size:12px; color:#64748b;">
+Statement Period: ${fromDate} To ${toDate}
+</p>
+
+</div>
+
+</div>
+
+<div style="
+margin-bottom:15px;
+font-size:14px;
+background:rgba(255,255,255,0.75);
+padding:12px;
+border:2px solid #8b5a2b;
+border-radius:8px;
+">
+<strong>Customer Profile Name:</strong> ${c.name}<br>
+<strong>Mobile Link:</strong> ${c.phone}<br>
+<strong>Account State Flag:</strong> ${c.status === 'default' ? 'Defaulted' : 'Active'}
+</div>
+`;
+        
+        
+        let currentRunningSum = 0;
+let orderedTx = c.transactions
+.filter(t => {
+    let txDate = new Date(t.date);
+    return txDate >= new Date(fromDate) &&
+           txDate <= new Date(toDate);
+})
+.sort((a,b) => new Date(a.rawTimestamp) - new Date(b.rawTimestamp));
+
+        orderedTx.forEach(t => {
+    if(t.type === 'give') currentRunningSum -= t.amount;
+    if(t.type === 'take') currentRunningSum += t.amount;
+});
+            
+           
+let totalDebit = 0;
+let totalCredit = 0;
+
+orderedTx.forEach(t=>{
+if(t.type==='give') totalDebit += t.amount;
+if(t.type==='take') totalCredit += t.amount;
+});
+
+let summaryBlock = `
+<div style="
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-bottom:20px;
+">
+
+<div style="padding:15px;background:#fff;border:2px solid #8b5a2b;text-align:center;">
+<b>Total Debit</b><br>
+₹${totalDebit.toFixed(2)}
+</div>
+
+<div style="padding:15px;background:#fff;border:2px solid #8b5a2b;text-align:center;">
+<b>Total Credit</b><br>
+₹${totalCredit.toFixed(2)}
+</div>
+
+<div style="padding:15px;background:#fff;border:2px solid #8b5a2b;text-align:center;">
+<b>Balance</b><br>
+₹${Math.abs(
+    orderedTx.length === 0
+        ? getCustomerBalance(c)
+        : currentRunningSum
+).toFixed(2)}
+
+</div>
+
+</div>
+`;
+
+const ROWS_PER_PAGE = 12;
+
+let pagesHTML = '';
+
+for(let i = 0; i < Math.max(orderedTx.length,1); i += ROWS_PER_PAGE){
+
+    let pageRows = '';
+
+    let pageTx = orderedTx.slice(i, i + ROWS_PER_PAGE);
+
+    if (orderedTx.length === 0) {
+        pageTx = [{
+            date: '',
+            remark: 'No transactions found for selected period',
+            mode: '',
+            amount: 0,
+            type: ''
+        }];
+    }
+
+    let runningBalance = 0;
+
+    pageTx.forEach(t => {
+
+        if (!t.type) {
+
+            pageRows += `
+            <tr>
+                <td colspan="5"
+                    style="
+                        padding:40px;
+                        text-align:center;
+                        font-weight:bold;
+                        color:#64748b;
+                    ">
+                    No transactions found for selected period
+                </td>
+            </tr>`;
+
+            return;
+        }
+
+     
+    if (t.type === 'give') {
+        runningBalance -= Number(t.amount);
+    } else if (t.type === 'take') {
+        runningBalance += Number(t.amount);
+    }
+
+    pageRows += `
+    <tr>
+        <td style="padding:8px;border:1px solid #cbd5e1;">
+            ${t.date}
+        </td>
+
+        <td style="padding:8px;border:1px solid #cbd5e1;">
+            ${t.remark || 'Transaction'}
+            <br>
+            <small style="color:#64748b;">
+                ${t.mode || 'Cash'}
+            </small>
+        </td>
+
+        <td style="padding:8px;border:1px solid #cbd5e1;text-align:right;color:#dc2626;">
+            ${t.type === 'give'
+                ? '₹' + Number(t.amount).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+                : '-'}
+        </td>
+
+        <td style="padding:8px;border:1px solid #cbd5e1;text-align:right;color:#16a34a;">
+            ${t.type === 'take'
+                ? '₹' + Number(t.amount).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+                : '-'}
+        </td>
+
+        <td style="padding:8px;border:1px solid #cbd5e1;text-align:right;font-weight:bold;">
+            ₹${Math.abs(runningBalance).toLocaleString('en-IN',{
+                minimumFractionDigits:2,
+                maximumFractionDigits:2
+            })}
+        </td>
+    </tr>
+    `;
+});
+	
+    const isLastPage = (i + ROWS_PER_PAGE >= orderedTx.length);
+
+    pagesHTML += `
+    <div style="
+        width:740px;
+        height:1080px;
+        position:relative;
+        background:#fff8e7;
+        border:8px solid #8b5a2b;
+        box-sizing:border-box;
+        overflow:hidden;
+        page-break-after:always;
+    ">
+
+        <div style="
+            position:absolute;
+            top:12px;
+            left:12px;
+            right:12px;
+            bottom:12px;
+            border:2px solid #c89b3c;
+            z-index:2;
+        "></div>
+
+        <img
+        src="https://i.postimg.cc/kgcK0ZYz/vintage-paper-background-with-grunge-floral-design-1048-4182.jpg"
+        style="
+        position:absolute;
+        inset:0;
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        opacity:.35;
+        z-index:0;
+        ">
+
+        <img
+src="https://i.postimg.cc/q7LbZN43/Compress-JPEG-Online-img-512x512-removebg-preview.png"
+crossorigin="anonymous"
+style="
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:250px;
+opacity:.30;
+z-index:1;
+">
+
+        <div style="
+            position:relative;
+            z-index:3;
+            padding:15px;
+        ">
+
+            ${headerBlock}
+
+            ${i === 0 ? summaryBlock : ''}
+
+            <table style="
+                width:100%;
+                border-collapse:collapse;
+                font-size:13px;
+                background:rgba(255,255,255,.70);
+            ">
+                <thead>
+                    <tr style="
+                    background:#6a3b00;
+                    color:#fff;
+                    ">
+                        <th style="padding:10px;">Date</th>
+                        <th style="padding:10px;">Narration Info</th>
+                        <th style="padding:10px;text-align:right;">Payment Out</th>
+                        <th style="padding:10px;text-align:right;">Payment In</th>
+                        <th style="padding:10px;text-align:right;">Balance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${pageRows}
+                </tbody>
+            </table>
+
+            ${
+                isLastPage
+                ?
+                `
+                <div style="
+                margin-top:20px;
+                text-align:right;
+                font-size:15px;
+                font-weight:bold;
+                border-top:2px solid #0f172a;
+                padding-top:10px;
+                ">
+                    Final Closing Position:
+                    <span style="color:${
+    (orderedTx.length === 0
+        ? getCustomerBalance(c)
+        : currentRunningSum) < 0
+            ? '#dc2626'
+            : '#16a34a'
+}">
+                    ₹${Math.abs(currentRunningSum).toFixed(2)}
+                    </span>
+                </div>
+
+                <div style="
+                margin-top:30px;
+                text-align:center;
+                font-size:12px;
+                font-weight:bold;
+                ">
+                    Made in India
+                </div>
+                `
+                :
+                ''
+            }
+
+        </div>
+
+    </div>
+    `;
+}
+
+parentNode.innerHTML = pagesHTML;
+console.log(parentNode.scrollHeight);
+
+        html2pdf()
+.set({
+margin: [5, 5, 5, 5],
+html2canvas: {
+useCORS:true,
+scale:1.5,
+scrollY:0
+},
+jsPDF: {
+unit: 'mm',
+format: 'a4',
+orientation: 'portrait'
+}
+})
+.from(parentNode)
+.save(`Rojmel_Ledger_${c.name.replace(/\s+/g, '_')}.pdf`);
+    }
+
+    function generateDashboardReport() {
+        const selectAllChecked = document.getElementById('report-select-all-checkbox').checked;
+        const customers = db.users[currentUserPhone].customers;
+        
+        if(Object.keys(customers).length === 0) { alert("No profiles found inside database to print reports."); return; }
+
+        let activeTargetKeys = [];
+        if (selectAllChecked) {
+            activeTargetKeys = Object.keys(customers);
+        } else {
+            const selectorNode = document.getElementById('dash-report-selector');
+            activeTargetKeys = Array.from(selectorNode.selectedOptions).map(opt => opt.value);
+            	
+            if(activeTargetKeys.length === 0) { 
+                alert("Please click and select at least one customer profile from the selection list layout box."); 
+                return; 
+            }
+        }
+
+        let parentNode = document.createElement('div');
+parentNode.style = `
+font-family:sans-serif;
+color:#334155;
+background:#fff;
+`;
+
+        
+        let headerBlock = `
+<div style="
+display:flex;
+align-items:center;
+border-bottom:2px dashed #0f172a;
+padding-bottom:10px;
+margin-bottom:15px;
+">
+
+<img
+src="https://i.postimg.cc/q7LbZN43/Compress-JPEG-Online-img-512x512-removebg-preview.png"
+crossorigin="anonymous"
+style="
+width:60px;
+height:60px;
+flex-shrink:0;
+">
+
+<div style="
+flex:1;
+text-align:center;
+margin-right:60px;
+">
+
+<h1 style="
+color:#8b5a2b;
+margin:0;
+font-size:18px;
+font-weight:bold;
+line-height:1.1;
+">
+॥ શ્રી ગણેશાય નમઃ ॥
+</h1>
+
+<h2 style="
+color:#0f172a;
+margin:2px 0;
+font-size:24px;
+font-weight:800;
+letter-spacing:1px;
+line-height:1.1;
+">
+ROJMEL LEDGER VAULT
+</h2>
+
+<p style="
+margin:0;
+font-size:11px;
+color:#64748b;
+line-height:1.1;
+">
+Timestamp Generated: ${new Date().toLocaleString()}
+</p>
+
+</div>
+
+</div>
+`;
+
+        let subRows = '';
+        let totalGiveSum = 0, totalTakeSum = 0;
+
+        activeTargetKeys.forEach(id => {
+            let c = customers[id];
+            if (!c) return;
+            let bal = getCustomerBalance(c);
+            if(c.status !== 'default') {
+                if(bal < 0) totalGiveSum += Math.abs(bal);
+                if(bal > 0) totalTakeSum += bal;
+            }
+
+            subRows += `
+                <tr>
+                    <td style="padding:12px; border-bottom:1px solid #cbd5e1;"><strong>${c.name}</strong></td>
+                    <td style="padding:12px; border-bottom:1px solid #cbd5e1;">${c.phone}</td>
+                    <td style="padding:12px; border-bottom:1px solid #cbd5e1; font-weight:600; text-transform:capitalize;">${c.status || 'active'}</td>
+                    <td style="padding:12px; border-bottom:1px solid #cbd5e1; text-align:right; font-weight:700; color:${bal < 0 ? '#dc2626' : bal > 0 ? '#16a34a' : '#64748b'}">
+                        ${bal === 0 ? '₹0.00' : '₹' + Math.abs(bal).toFixed(2) + (bal < 0 ? ' (Payment Out)' : ' (Payment In)')}
+                    </td>
+                </tr>
+            `;
+        });
+
+        const ROWS_PER_PAGE = 18;
+
+let rowsArray = [];
+
+activeTargetKeys.forEach(id => {
+
+    let c = customers[id];
+    if (!c) return;
+
+    let bal = getCustomerBalance(c);
+
+    rowsArray.push(`
+    <tr>
+        <td style="padding:10px;border-bottom:1px solid #cbd5e1;">
+            <strong>${c.name}</strong>
+        </td>
+
+        <td style="padding:10px;border-bottom:1px solid #cbd5e1;">
+            ${c.phone}
+        </td>
+
+        <td style="padding:10px;border-bottom:1px solid #cbd5e1;font-weight:600;">
+            ${c.status || 'active'}
+        </td>
+
+        <td style="
+        padding:10px;
+        border-bottom:1px solid #cbd5e1;
+        text-align:right;
+        font-weight:700;
+        color:${bal < 0 ? '#dc2626' : bal > 0 ? '#16a34a' : '#64748b'};
+        ">
+            ${bal === 0
+            ? '₹0.00'
+            : '₹' + Math.abs(bal).toFixed(2)}
+        </td>
+    </tr>
+    `);
+
+});
+
+let pagesHTML = '';
+
+for(let i=0;i<rowsArray.length;i+=ROWS_PER_PAGE){
+
+    let pageRows = rowsArray
+        .slice(i,i+ROWS_PER_PAGE)
+        .join('');
+
+    const isLastPage =
+        (i + ROWS_PER_PAGE >= rowsArray.length);
+
+    pagesHTML += `
+    <div style="
+position:relative;
+width:740px;
+height:1080px;
+    background:#fff8e7;
+    overflow:hidden;
+    border:8px solid #8b5a2b;
+    box-sizing:border-box;
+    page-break-after:always;
+    ">
+
+    <div style="
+    position:absolute;
+    top:12px;
+    left:12px;
+    right:12px;
+    bottom:12px;
+    border:2px solid #c89b3c;
+    z-index:3;
+    "></div>
+
+    <img
+    src="https://i.postimg.cc/kgcK0ZYz/vintage-paper-background-with-grunge-floral-design-1048-4182.jpg"
+    crossorigin="anonymous"
+    style="
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:.35;
+    z-index:0;
+    ">
+
+    <img
+    src="https://i.postimg.cc/q7LbZN43/Compress-JPEG-Online-img-512x512-removebg-preview.png"
+    crossorigin="anonymous"
+    style="
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:260px;
+    opacity:.30;
+    z-index:1;
+    ">
+
+    <div style="
+    position:relative;
+    z-index:2;
+    padding:20px;
+    ">
+
+    ${headerBlock}
+
+    ${
+        i===0
+        ?
+        `
+        <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:20px;
+        background:#f8fafc;
+        padding:12px;
+        border:1px solid #cbd5e1;
+        border-radius:8px;
+        ">
+            <div>
+                Consolidated Payables:
+                <b style="color:#dc2626;">
+                ₹${totalGiveSum.toFixed(2)}
+                </b>
+            </div>
+
+            <div>
+                Consolidated Receivables:
+                <b style="color:#16a34a;">
+                ₹${totalTakeSum.toFixed(2)}
+                </b>
+            </div>
+        </div>
+        `
+        :
+        ''
+    }
+
+    <table style="
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    background:rgba(255,255,255,.75);
+    ">
+        <thead>
+            <tr style="
+            background:#0f172a;
+            color:#fff;
+            ">
+                <th style="padding:10px;">
+                Customer Name
+                </th>
+
+                <th style="padding:10px;">
+                Mobile
+                </th>
+
+                <th style="padding:10px;">
+                Status
+                </th>
+
+                <th style="padding:10px;text-align:right;">
+                Balance
+                </th>
+            </tr>
+        </thead>
+
+        <tbody>
+            ${pageRows}
+        </tbody>
+    </table>
+
+    ${
+        isLastPage
+        ?
+        `
+        <div style="
+        margin-top:25px;
+        text-align:center;
+        font-size:12px;
+        font-weight:bold;
+        ">
+        Made in India
+        </div>
+        `
+        :
+        ''
+    }
+
+    </div>
+    </div>
+    `;
+}
+parentNode.innerHTML = pagesHTML;
+console.log(parentNode.scrollHeight);
+
+alert("Reached PDF Save");
+
+html2pdf()
+.set({
+
+margin:[5,5,5,5],
+html2canvas:{
+useCORS:true,
+scale:1.5,
+scrollY:0
+},
+jsPDF:{
+unit:'mm',
+format:'a4',
+orientation:'portrait'
+}
+})
+.from(parentNode)
+.save(`Rojmel_Selected_Accounts_Report.pdf`);
+    }
+
+// 1. Show the Edit Profile form
+function openProfileEditInline() {
+isProfileEditing = true;
+document.body.classList.add("profile-lock");
+
+    // Hide the summary cards
+    const summaryCard = document.querySelector('.summary-card');
+    if (summaryCard) summaryCard.classList.add('hidden');
+    
+    // Show the edit form
+    const editForm = document.getElementById('profile-edit-inline');
+    if (editForm) {
+        editForm.classList.remove('hidden');
+        
+        // Populate the data from your database object
+        // Ensure 'db' and 'currentUserPhone' are defined globally in your script
+        document.getElementById('edit-profile-name').value = db.users[currentUserPhone].name || "";
+        document.getElementById('edit-profile-phone').value = currentUserPhone;
+    }
+}
+
+// 2. Hide the edit form and return to the dashboard
+function hideProfileInline() {
+
+    isProfileEditing = false;
+    document.body.classList.remove("profile-lock");	
+    const editForm = document.getElementById('profile-edit-inline');
+    const summaryCard = document.querySelector('.summary-card');
+    
+    if (editForm) editForm.classList.add('hidden');
+    if (summaryCard) summaryCard.classList.remove('hidden');
+}
+
+// 3. Save the new name and refresh the UI
+function saveProfileChanges() {
+
+    let newName = document.getElementById('edit-profile-name').value;
+
+    if (!newName.trim()) {
+        alert("Please enter name");
+        return;
+    }
+
+    // Update database
+    db.users[currentUserPhone].name = newName;
+
+    // Save database
+    saveDatabase();
+
+
+    // Update profile header
+    let profileDisplayName = document.getElementById('profile-display-name');
+    if(profileDisplayName){
+        profileDisplayName.innerText = newName;
+    }
+
+    // Update avatar
+    let avatar = document.getElementById('profile-avatar-char');
+    if(avatar){
+        avatar.innerText = newName.charAt(0).toUpperCase();
+    }
+
+    // Update any profile name text
+    let profileName = document.getElementById('profile-name');
+    if(profileName){
+        profileName.innerText = newName;
+    }
+
+    // Refresh left menu
+    // Refresh left menu
+buildLeftMenuCustomerList();
+
+let file = document.getElementById('edit-profile-photo').files[0];
+
+if(file){
+
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+
+    // Save image inside user object
+    db.users[currentUserPhone].photo = e.target.result;
+
+    // Save database
+    saveDatabase();
+
+    let img = document.getElementById('profile-avatar-image');
+
+img.src = e.target.result;
+
+img.style.display = "inline-block";
+
+document.getElementById('profile-avatar-char').style.display = "none";
+
+img.classList.remove("hidden");
+
+};
+
+    reader.readAsDataURL(file);
+
+}
+
+isProfileEditing = false;
+document.body.classList.remove("profile-lock");
+
+alert("Profile updated successfully");
+
+hideProfileInline();
+
+}
+
+function showPaymentOutCustomers(){
+    const customers=db.users[currentUserPhone].customers;
+    const list=Object.values(customers).filter(c=>getCustomerBalance(c)<0)
+      .map(c=>`${c.name} : ₹${Math.abs(getCustomerBalance(c)).toFixed(2)}`);
+    alert(list.length?('Payment Out Customers\n\n'+list.join('\n')):'No outstanding Payment Out balance.');
+}
+
+function showPaymentInCustomers(){
+    const customers=db.users[currentUserPhone].customers;
+    const list=Object.values(customers).filter(c=>getCustomerBalance(c)>0)
+      .map(c=>`${c.name} : ₹${Math.abs(getCustomerBalance(c)).toFixed(2)}`);
+    alert(list.length?('Payment In Customers\n\n'+list.join('\n')):'No outstanding Payment In balance.');
+}
+
+window.addEventListener('beforeunload', () => {
+    // We save the current view (like 'dash', 'custdb', or 'ledger')
+    // and the specific customer ID if we are in a ledger
+    const currentView = document.querySelector('.main-app > div:not(.hidden)').id;
+    localStorage.setItem('rojmel_last_view', currentView);
+    if (activeCustomerId) {
+        localStorage.setItem('rojmel_active_customer_id', activeCustomerId);
+    } else {
+        localStorage.removeItem('rojmel_active_customer_id');
+    }
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+   const view=localStorage.getItem('rojmel_current_view');
+   const cid=localStorage.getItem('rojmel_active_customer_id');
+   setTimeout(()=>{
+      if(view==='ledger' && cid && currentUserPhone){
+         try{openCustomerWiseLedger(cid);}catch(e){}
+      }
+   },300);
+});
+window.addEventListener('beforeunload',()=>{
+
+    localStorage.setItem("rojmel_last_view","dashboard");
+
+});
+// Scan for transactions older than 6 months with remaining balance
+function checkSixMonthAlerts() {
+    // Check if user dismissed within the last 10 days
+    const lastDismissed = localStorage.getItem('last_alert_dismissal_date');
+    if (lastDismissed) {
+        const lastDate = new Date(lastDismissed);
+        const today = new Date();
+        const diffDays = Math.ceil((today - lastDate) / (1000 * 60 * 60 * 24));
+        if (diffDays < 10) return; // Still within the 10-day dismissal window
+    }
+
+    if (!currentUserPhone || !db.users[currentUserPhone]) return;
+
+    const customers = db.users[currentUserPhone].customers || {};
+    let overdueParties = [];
+
+    // Scan for transactions > 6 months old with remaining balance
+    Object.values(customers).forEach(customer => {
+        if (!customer.transactions) return;
+        
+        customer.transactions.forEach(tx => {
+            const txDate = new Date(tx.date);
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+            // Flag if the debt is > 6 months old and amount > 0
+            if (txDate < sixMonthsAgo && tx.amount > 0) {
+                overdueParties.push(`${customer.name} - ₹${tx.amount} (${tx.date})`);
+            }
+        });
+    });
+
+    if (overdueParties.length > 0) {
+        showWarningModal(overdueParties);
+    }
+}
+
+// Display the modal
+function showWarningModal(list) {
+    const container = document.getElementById('alert-modal-list');
+    container.innerHTML = list.map(item => `<div style="padding:6px 0; border-bottom:1px solid #ddd;">${item}</div>`).join('');
+    document.getElementById('alert-modal').classList.remove('hidden');
+}
+
+
+
+// backup & Restore
+function importBackup(event){
+
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    if(!confirm(
+        'Restore backup and replace existing data?'
+    )){
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        try{
+
+            const importedDB =
+                JSON.parse(e.target.result);
+
+            db = importedDB;
+
+            saveDatabase();
+
+            alert(
+                'Backup restored successfully'
+            );
+
+            location.reload();
+
+        }catch(err){
+
+            alert(
+                'Invalid backup file'
+            );
+
+        }
+
+    };
+
+    reader.readAsText(file);
+
+}
+
+//reopen due
+function reopenTransactionDue(txId){
+
+    const targetCust =
+        db.users[currentUserPhone]
+        .customers[activeCustomerId];
+
+    const tx =
+        targetCust.transactions.find(
+            t => t.id === txId
+        );
+
+    if(!tx) return;
+
+    tx.dueStatus = "open";
+    tx.clearedDate = null;
+
+    saveDatabase();
+
+    renderInsideLedgerRows();
+    calculateMetrics();
+}
+
+// Backup & Restore
+function backupDatabase(){
+
+    const dataStr = JSON.stringify(db);
+
+    const blob = new Blob(
+        [dataStr],
+        {type:'application/json'}
+    );
+
+    const a = document.createElement('a');
+
+    a.href = URL.createObjectURL(blob);
+
+    a.download =
+        'Rojmel_Backup_' +
+        new Date().toISOString().slice(0,10) +
+        '.json';
+
+    a.click();
+}
+
+function restoreDatabase(){
+
+    document
+    .getElementById('restore-file')
+    .click();
+
+}
+
+function restoreSelectedFile(event){
+
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        try{
+
+            const restoredDb =
+                JSON.parse(e.target.result);
+
+            db = restoredDb;
+
+            saveDatabase();
+
+            alert(
+                'Backup restored successfully.'
+            );
+
+            location.reload();
+
+        }catch(err){
+
+            alert(
+                'Invalid backup file.'
+            );
+
+        }
+    };
+
+    reader.readAsText(file);
+}
+// Firewall
+function saveDatabase() {
+
+localStorage.setItem(
+    'rojmel_secure_db_v1',
+    JSON.stringify(db)
+);
+
+if (appReady) {
+    saveCloudData();
+}
+
+}
+
+function exportBackup(){
+
+    try{
+
+        const data = JSON.stringify(db,null,2);
+
+        const blob = new Blob(
+            [data],
+            {type:'application/json'}
+        );
+
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+
+        a.href = url;
+
+        a.download =
+            `Rojmel_Backup_${new Date().toISOString().split('T')[0]}.json`;
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        document.body.removeChild(a);
+
+        URL.revokeObjectURL(url);
+
+    }catch(err){
+
+        alert('Backup export failed');
+
+    }
+
+}
+
+//strong password
+function isStrongPassword(password){
+
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$/.test(password);
+
+}
+
+
+//recyle bin
+function openRecycleBin() {
+
+    cleanRecycleBin();
+
+    document.getElementById('dashboard-view').classList.add('hidden');
+    document.getElementById('customer-database-view').classList.add('hidden');
+    document.getElementById('collection-view').classList.add('hidden');
+    document.getElementById('ledger-view').classList.add('hidden');
+
+    document.getElementById('recycle-bin-view').classList.remove('hidden');
+
+    document.getElementById('app-title').innerText = "🗑 Recycle Bin";
+
+    document.getElementById('menu-toggle-btn').style.display = "none";
+    document.getElementById('back-btn').style.display = "inline-block";
+
+    renderRecycleBin();
+}
+
+function closeRecycleBinPage() {
+
+    document.getElementById('recycle-bin-view').classList.add('hidden');
+
+    showDashboard();
+
+}
+function renderRecycleBin() {
+
+    const tbody = document.getElementById('recycle-bin-rows');
+
+    tbody.innerHTML = "";
+
+    if (!db.recycleBin || db.recycleBin.length == 0) {
+
+        tbody.innerHTML =
+        `<tr>
+            <td colspan="5" style="text-align:center;">
+                No deleted items found.
+            </td>
+        </tr>`;
+
+        return;
+    }
+
+    db.recycleBin.forEach((item, index) => {
+
+        let amountText = "";
+
+        if (item.type == "transaction") {
+            amountText = "₹" + item.amount;
+        } else {
+            amountText = "₹" + item.totalBalance;
+        }
+
+        tbody.innerHTML += `
+        <tr>
+
+            <td>${item.type}</td>
+
+            <td>${item.customerName}</td>
+
+            <td>${amountText}</td>
+
+            <td>${new Date(item.deletedAt).toLocaleString()}</td>
+
+            <td>
+
+<button class="restore-btn"
+onclick="restoreRecycleItem(${index})">
+♻ Restore
+</button>
+
+<button class="delete-btn"
+onclick="deleteRecycleItem(${index})">
+❌ Delete
+</button>
+
+</td>
+
+        </tr>`;
+    });
+}
+function restoreRecycleItem(index) {
+
+    let item = db.recycleBin[index];
+
+    if (item.type == "customer") {
+
+        db.users[currentUserPhone].customers[item.customerId] =
+            JSON.parse(JSON.stringify(item.data));
+
+    } else if (item.type == "transaction") {
+
+    if (
+        db.users[currentUserPhone].customers[item.customerId]
+    ) {
+
+        db.users[currentUserPhone]
+            .customers[item.customerId]
+            .transactions
+            .push(
+                JSON.parse(JSON.stringify(item.data))
+            );
+
+    } else {
+
+        alert(
+            "Customer does not exist. Restore the customer first."
+        );
+
+        return;
+    }
+}
+
+    db.recycleBin.splice(index, 1);
+
+    saveDatabase();
+
+    renderRecycleBin();
+
+    buildLeftMenuCustomerList();
+
+    calculateMetrics();
+
+}
+function deleteRecycleItem(index) {
+
+    if (!confirm("Delete permanently?"))
+        return;
+
+    db.recycleBin.splice(index, 1);
+
+    saveDatabase();
+
+    renderRecycleBin();
+
+}
+function cleanRecycleBin() {
+
+    if (!db.recycleBin)
+        return;
+
+    const oldLength = db.recycleBin.length;
+
+    let tenDays = 10 * 24 * 60 * 60 * 1000;
+
+    db.recycleBin = db.recycleBin.filter(item =>
+        Date.now() - new Date(item.deletedAt).getTime() < tenDays
+    );
+
+    if (db.recycleBin.length !== oldLength) {
+        saveDatabase();
+    }
+}
+cleanRecycleBin();
+</script>
+<script>
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.addEventListener('keydown', function(e){
+
+    if (
+        (e.ctrlKey || e.metaKey) &&
+        (
+            e.key === 'c' ||
+            e.key === 'C' ||
+            e.key === 'a' ||
+            e.key === 'A' ||
+            e.key === 'x' ||
+            e.key === 'X'
+        )
+    ){
+        e.preventDefault();
+    }
+
+});
+function startLedgerPdfGeneration() {
+
+    const period =
+        document.getElementById('ledger-period').value;
+
+    const today = new Date();
+
+    let fromDate;
+    let toDate;
+
+    switch(period) {
+
+        case "thisMonth":
+
+            fromDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    1
+                );
+
+            toDate = today;
+
+            break;
+
+        case "lastMonth":
+
+            fromDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth() - 1,
+                    1
+                );
+
+            toDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    0
+                );
+
+            break;
+
+        case "last3Months":
+
+            fromDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth() - 2,
+                    1
+                );
+
+            toDate = today;
+
+            break;
+
+        case "last6Months":
+
+            fromDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth() - 5,
+                    1
+                );
+
+            toDate = today;
+
+            break;
+
+        case "currentFY":
+
+            const fyStartYear =
+                today.getMonth() >= 3
+                ? today.getFullYear()
+                : today.getFullYear() - 1;
+
+            fromDate =
+                new Date(fyStartYear, 3, 1);
+
+            toDate = today;
+
+            break;
+
+        case "lastFY":
+
+            const lastFyStartYear =
+                today.getMonth() >= 3
+                ? today.getFullYear() - 1
+                : today.getFullYear() - 2;
+
+            fromDate =
+                new Date(
+                    lastFyStartYear,
+                    3,
+                    1
+                );
+
+            toDate =
+                new Date(
+                    lastFyStartYear + 1,
+                    2,
+                    31
+                );
+
+            break;
+
+        case "custom":
+
+            fromDate =
+                new Date(
+                    document.getElementById(
+                        "ledger-from-date"
+                    ).value
+                );
+
+            toDate =
+                new Date(
+                    document.getElementById(
+                        "ledger-to-date"
+                    ).value
+                );
+
+            break;
+    }
+
+    window.selectedFromDate =
+        fromDate.toISOString().split('T')[0];
+
+    window.selectedToDate =
+        toDate.toISOString().split('T')[0];
+
+    generateTransactionWiseLedgerReport();
+}
+
+//pdf date
+function handleLedgerPeriodChange() {
+
+    const period =
+        document.getElementById('ledger-period').value;
+
+    document.getElementById(
+        'custom-date-section'
+    ).style.display =
+        period === 'custom'
+        ? 'block'
+        : 'none';
+}
+
+//pickup contact
+function normalizePhoneNumber(phone) {
+    if (!phone) return '';
+
+    phone = String(phone).replace(/\D/g, '');
+
+    if (phone.length === 12 && phone.startsWith('91')) {
+        phone = phone.substring(2);
+    }
+
+    if (phone.length > 10) {
+        phone = phone.slice(-10);
+    }
+
+    return phone;
+}
+
+async function pickCustomerContact() {
+    if (!('contacts' in navigator)) {
+        alert('Contact picker is not supported on this device/browser.');
+        return;
+    }
+
+    try {
+        const contacts = await navigator.contacts.select(
+            ['name', 'tel'],
+            { multiple: false }
+        );
+
+        if (contacts.length > 0) {
+            document.getElementById('cust-name').value =
+                contacts[0].name?.[0] || '';
+
+            document.getElementById('cust-phone').value =
+                normalizePhoneNumber(contacts[0].tel?.[0] || '');
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+//system back
+history.pushState(null, null, location.href);
+
+let lastBackPress = 0;
+
+window.addEventListener('popstate', function () {
+
+    // Ledger screen open
+    if (!document.getElementById('ledger-view').classList.contains('hidden')) {
+        openView('custdb');
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Customer database screen open
+    if (!document.getElementById('custdb-view').classList.contains('hidden')) {
+        openView('dash');
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Dashboard screen
+    let now = Date.now();
+
+    if (now - lastBackPress < 2000) {
+        window.close();
+    } else {
+        lastBackPress = now;
+        alert("Press back again to exit");
+        history.pushState(null, null, location.href);
+    }
+
+});
+history.pushState(null, null, location.href);
+
+
+window.addEventListener('popstate', function () {
+
+    // Close open modal first
+    const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+    if (openModal) {
+        openModal.classList.add('hidden');
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Ledger page → Customer Database
+    if (!document.getElementById('ledger-view').classList.contains('hidden')) {
+        showCustomerDatabaseTab();
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Collection page → Dashboard
+    if (!document.getElementById('collection-view').classList.contains('hidden')) {
+        showDashboard();
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Customer Database → Dashboard
+    if (!document.getElementById('customer-database-view').classList.contains('hidden')) {
+        showDashboard();
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Recycle Bin → Dashboard
+    if (!document.getElementById('recycle-bin-view').classList.contains('hidden')) {
+        showDashboard();
+        history.pushState(null, null, location.href);
+        return;
+    }
+
+    // Dashboard → Exit confirmation
+    const now = Date.now();
+
+    if (now - lastBackPress < 2000) {
+        window.close();
+    } else {
+        lastBackPress = now;
+        alert("Press back again to exit");
+        history.pushState(null, null, location.href);
+    }
+
+});
+
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('Service Worker registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
